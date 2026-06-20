@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Scoria", "Scoria\Scoria.csproj", "{8995507F-C8FD-49B3-8C50-8003D4F55A1E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{701822C5-A99C-4316-8FC0-FB03DF600D1B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8995507F-C8FD-49B3-8C50-8003D4F55A1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8995507F-C8FD-49B3-8C50-8003D4F55A1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8995507F-C8FD-49B3-8C50-8003D4F55A1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8995507F-C8FD-49B3-8C50-8003D4F55A1E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{701822C5-A99C-4316-8FC0-FB03DF600D1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{701822C5-A99C-4316-8FC0-FB03DF600D1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{701822C5-A99C-4316-8FC0-FB03DF600D1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{701822C5-A99C-4316-8FC0-FB03DF600D1B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
