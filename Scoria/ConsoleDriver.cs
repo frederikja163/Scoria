@@ -42,6 +42,9 @@ internal static class ConsoleDriver
         }
     }
 
+    /// <summary>
+    /// Creates and returns a new <see cref="FrameDriver"/> for writing a frame to the standard output stream.
+    /// </summary>
     public static FrameDriver StartFrame()
     {
         return new FrameDriver(new StreamWriter(Console.OpenStandardOutput()));
