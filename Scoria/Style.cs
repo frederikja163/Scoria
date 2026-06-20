@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using System.Runtime.CompilerServices;
+
+namespace Scoria;
 
 /// <summary>
 /// Flags that define text style attributes such as bold, italic, and underline.
@@ -27,7 +29,7 @@ public enum StyleAttributes : byte
 /// <summary>
 /// Defines the visual style for terminal output, including foreground and background colors and text attributes.
 /// </summary>
-public struct Style()
+public struct Style() : IEquatable<Style>
 {
     /// <summary>Red component of the foreground (text) color (0-255). Defaults to 255.</summary>
     public byte ForegroundRed { get; set; } = 255;
@@ -41,8 +43,9 @@ public struct Style()
     public byte BackgroundGreen { get; set; }
     /// <summary>Blue component of the background color (0-255). Defaults to 0.</summary>
     public byte BackgroundBlue { get; set; }
-    /// <summary>Alpha (opacity) of the background color (0-255). Defaults to 0.</summary>
-    public byte BackgroundAlpha { get; set; }
+
+    /// <summary>Alpha (opacity) of the background color (0-255). Defaults to 255 (fully opaque).</summary>
+    public byte Alpha { get; set; } = 255;
     /// <summary>Text style attributes (bold, italic, underline, etc.).</summary>
     public StyleAttributes StyleAttributes { get; set; }
 
@@ -55,10 +58,10 @@ public struct Style()
     /// <param name="backgroundRed">Red component of the background color (0-255).</param>
     /// <param name="backgroundGreen">Green component of the background color (0-255).</param>
     /// <param name="backgroundBlue">Blue component of the background color (0-255).</param>
-    /// <param name="backgroundAlpha">Alpha (opacity) of the background color (0-255).</param>
+    /// <param name="alpha">Alpha (opacity) of the background color (0-255).</param>
     /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
     public Style(byte foregroundRed, byte foregroundGreen, byte foregroundBlue,
-        byte backgroundRed = 0, byte backgroundGreen = 0, byte backgroundBlue = 0, byte backgroundAlpha = 0,
+        byte backgroundRed = 0, byte backgroundGreen = 0, byte backgroundBlue = 0, byte alpha = 255,
         StyleAttributes styleAttributes = StyleAttributes.None) : this()
     {
         ForegroundRed = foregroundRed;
@@ -67,7 +70,7 @@ public struct Style()
         BackgroundRed = backgroundRed;
         BackgroundGreen = backgroundGreen;
         BackgroundBlue = backgroundBlue;
-        BackgroundAlpha = backgroundAlpha;
+        Alpha = alpha;
         StyleAttributes = styleAttributes;
     }
 
@@ -94,5 +97,46 @@ public struct Style()
     public Style(StyleAttributes styleAttributes) : this()
     {
         StyleAttributes = styleAttributes;
+    }
+    
+    /// <summary>Determines whether two <see cref="Style"/> instances are equal.</summary>
+    /// <param name="left">The first style to compare.</param>
+    /// <param name="right">The second style to compare.</param>
+    /// <returns><see langword="true"/> if the styles are equal; otherwise <see langword="false"/>.</returns>
+    public static bool operator ==(Style left, Style right)
+    {
+        return Unsafe.BitCast<Style, long>(left) == Unsafe.BitCast<Style, long>(right);
+    }
+
+    /// <summary>Determines whether two <see cref="Style"/> instances are not equal.</summary>
+    /// <param name="left">The first style to compare.</param>
+    /// <param name="right">The second style to compare.</param>
+    /// <returns><see langword="true"/> if the styles are not equal; otherwise <see langword="false"/>.</returns>
+    public static bool operator !=(Style left, Style right)
+    {
+        return Unsafe.BitCast<Style, long>(left) != Unsafe.BitCast<Style, long>(right);
+    }
+
+    /// <summary>Indicates whether the current style is equal to another style.</summary>
+    /// <param name="other">A style to compare with this style.</param>
+    /// <returns><see langword="true"/> if the current style is equal to the <paramref name="other"/> parameter; otherwise <see langword="false"/>.</returns>
+    public bool Equals(Style other)
+    {
+        return this == other;
+    }
+
+    /// <summary>Indicates whether this instance and a specified object are equal.</summary>
+    /// <param name="obj">The object to compare with the current instance.</param>
+    /// <returns><see langword="true"/> if <paramref name="obj"/> is a <see cref="Style"/> and equal to this instance; otherwise <see langword="false"/>.</returns>
+    public override bool Equals(object? obj)
+    {
+        return obj is Style other && Equals(other);
+    }
+
+    /// <summary>Returns the hash code for this style.</summary>
+    /// <returns>A 32-bit signed integer hash code built from all color channels and style attributes.</returns>
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(ForegroundRed, ForegroundGreen, ForegroundBlue, BackgroundRed, BackgroundGreen, BackgroundBlue, Alpha, (int)StyleAttributes);
     }
 }
