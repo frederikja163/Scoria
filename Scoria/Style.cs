@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Scoria;
 
@@ -29,6 +30,7 @@ public enum StyleAttributes : byte
 /// <summary>
 /// Defines the visual style for terminal output, including foreground and background colors and text attributes.
 /// </summary>
+[StructLayout(LayoutKind.Sequential)]
 public struct Style() : IEquatable<Style>
 {
     /// <summary>Red component of the foreground (text) color (0-255). Defaults to 255.</summary>

@@ -20,8 +20,8 @@ internal static class ConsoleDriver
             InitWindows();
         }
         _writer = new StreamWriter(Console.OpenStandardOutput());
-        _width = Console.BufferWidth;
-        _height = Console.BufferHeight;
+        _width = Console.WindowWidth;
+        _height = Console.WindowHeight;
     }
 
     internal static void Frame(Surface surface)
@@ -58,8 +58,9 @@ internal static class ConsoleDriver
     
     private static void Clear()
     {
-        Escape();
-        Write('c');
+        ControlSequenceIntroducer('J', 2);
+        ControlSequenceIntroducer('H');
+        ControlSequenceIntroducer('J', 3);
     }
 
     private static void NextLine()
@@ -81,23 +82,25 @@ internal static class ConsoleDriver
         ApplyAttribute(StyleAttributes.DoubleUnderline, GraphicsRendition.DoubleUnderlineOn, GraphicsRendition.DoubleUnderlineOff);
         ApplyAttribute(StyleAttributes.Overline, GraphicsRendition.OverlinedOn, GraphicsRendition.OverlinedOff);
 
-        if (style.ForegroundRed != _currentStyle.ForegroundRed ||
+        if (style.ForegroundRed   != _currentStyle.ForegroundRed   ||
             style.ForegroundGreen != _currentStyle.ForegroundGreen ||
-            style.ForegroundBlue != _currentStyle.ForegroundBlue)
+            style.ForegroundBlue  != _currentStyle.ForegroundBlue)
         {
-            SelectGraphicsRendition(GraphicsRendition.Foreground, 2, style.ForegroundRed, style.ForegroundGreen, style.ForegroundBlue);
-            _currentStyle.ForegroundRed = style.ForegroundRed;
+            SelectGraphicsRendition(GraphicsRendition.Foreground, 2,
+                style.ForegroundRed, style.ForegroundGreen, style.ForegroundBlue);
+            _currentStyle.ForegroundRed   = style.ForegroundRed;
             _currentStyle.ForegroundGreen = style.ForegroundGreen;
-            _currentStyle.ForegroundBlue = style.ForegroundBlue;
+            _currentStyle.ForegroundBlue  = style.ForegroundBlue;
         }
-        if (style.BackgroundRed != _currentStyle.BackgroundRed ||
+        if (style.BackgroundRed   != _currentStyle.BackgroundRed   ||
             style.BackgroundGreen != _currentStyle.BackgroundGreen ||
-            style.BackgroundBlue != _currentStyle.BackgroundBlue)
+            style.BackgroundBlue  != _currentStyle.BackgroundBlue)
         {
-            SelectGraphicsRendition(GraphicsRendition.Background, 2, style.BackgroundRed, style.BackgroundGreen, style.BackgroundBlue);
-            _currentStyle.BackgroundRed = style.BackgroundRed;
+            SelectGraphicsRendition(GraphicsRendition.Background, 2,
+                style.BackgroundRed, style.BackgroundGreen, style.BackgroundBlue);
+            _currentStyle.BackgroundRed   = style.BackgroundRed;
             _currentStyle.BackgroundGreen = style.BackgroundGreen;
-            _currentStyle.BackgroundBlue = style.BackgroundBlue;
+            _currentStyle.BackgroundBlue  = style.BackgroundBlue;
         }
 
         void ApplyAttribute(StyleAttributes styleAttribute, GraphicsRendition on, GraphicsRendition off)
@@ -110,25 +113,10 @@ internal static class ConsoleDriver
         }
     }
 
-    private static void Write(char value)
-    {
-        _buffer.Append(value);
-    }
-
-    private static void Write(string value)
-    {
-        _buffer.Append(value);
-    }
-
-    private static void WriteRaw(int value)
-    {
-        _buffer.Append((char)value);
-    }
-
-    private static void Escape()
-    {
-        WriteRaw(0x1b);
-    }
+    private static void Write(char value)    => _buffer.Append(value);
+    private static void Write(string value)  => _buffer.Append(value);
+    private static void WriteRaw(int value)  => _buffer.Append((char)value);
+    private static void Escape()             => WriteRaw(0x1b);
 
     private static void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
     {
@@ -168,11 +156,19 @@ internal static class ConsoleDriver
         Background = 48
     }
 
-    private const int STD_INPUT_HANDLE = -10;
+    // ---- Windows P/Invoke ----
 
-    private const uint ENABLE_LINE_INPUT = 0x0002;
-    private const uint ENABLE_ECHO_INPUT = 0x0004;
-    private const uint ENABLE_VIRTUAL_TERMINAL_INPUT = 0x0200;
+    private const int STD_INPUT_HANDLE  = -10;
+    private const int STD_OUTPUT_HANDLE = -11;
+
+    private const uint ENABLE_LINE_INPUT                 = 0x0002;
+    private const uint ENABLE_ECHO_INPUT                 = 0x0004;
+    private const uint ENABLE_VIRTUAL_TERMINAL_INPUT     = 0x0200;
+    private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
+    private const uint ENABLE_PROCESSED_OUTPUT           = 0x0001;
+
+    private static uint _originalInputMode;
+    private static uint _originalOutputMode;
 
     [DllImport("kernel32.dll")]
     static extern IntPtr GetStdHandle(int nStdHandle);
@@ -186,14 +182,34 @@ internal static class ConsoleDriver
     [SupportedOSPlatform("Windows")]
     private static void InitWindows()
     {
-        IntPtr handle = GetStdHandle(STD_INPUT_HANDLE);
+        IntPtr inHandle  = GetStdHandle(STD_INPUT_HANDLE);
+        IntPtr outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
-        GetConsoleMode(handle, out uint mode);
+        GetConsoleMode(inHandle,  out _originalInputMode);
+        GetConsoleMode(outHandle, out _originalOutputMode);
 
-        mode &= ~ENABLE_LINE_INPUT;
-        mode &= ~ENABLE_ECHO_INPUT;
-        mode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+        uint inMode = _originalInputMode;
+        inMode &= ~ENABLE_LINE_INPUT;
+        inMode &= ~ENABLE_ECHO_INPUT;
+        inMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
+        SetConsoleMode(inHandle, inMode);
 
-        SetConsoleMode(handle, mode);
+        SetConsoleMode(outHandle,
+            _originalOutputMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => RestoreConsole();
+        Console.CancelKeyPress += (_, args) =>
+        {
+            RestoreConsole();
+            args.Cancel = false;
+        };
+    }
+
+    private static void RestoreConsole()
+    {
+        IntPtr inHandle  = GetStdHandle(STD_INPUT_HANDLE);
+        IntPtr outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+        SetConsoleMode(inHandle,  _originalInputMode);
+        SetConsoleMode(outHandle, _originalOutputMode);
     }
 }

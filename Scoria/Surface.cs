@@ -43,16 +43,16 @@ public sealed class Surface
     /// <param name="style">The style to apply to every cell in the region.</param>
     public void Fill(char c, int xMin, int yMin, int xMax, int yMax, Style style)
     {
-        int width = Math.Min(xMax, Width);
-        int height = Math.Min(yMax, Height);
         xMin = Math.Max(0, xMin);
         yMin = Math.Max(0, yMin);
+        xMax = Math.Min(xMax, Width);
+        yMax = Math.Min(yMax, Height);
 
-        for (int xOffset = 0; xOffset < width; xOffset++)
+        for (int x = xMin; x < xMax; x++)
         {
-            for (int yOffset = 0; yOffset < height; yOffset++)
+            for (int y = yMin; y < yMax; y++)
             {
-                Write(c, xMin + xOffset, yMin + yOffset, style);
+                Write(c, x, y, style);
             }
         }
     }

@@ -1,13 +1,13 @@
 ﻿using Scoria;
 
-Style style1 = new Style(80, 20, 250, StyleAttributes.None);
-Style style2 = new Style(255, 20, 250, StyleAttributes.Bold | StyleAttributes.DoubleUnderline);
-
 Style white = new Style(0, 0, 0, 255, 255, 255);
 Style black = new Style(255, 255, 255, 0, 0, 0);
 
-Surface checkeredX = new Surface(Console.BufferWidth, Console.BufferHeight);
-Surface checkeredY = new Surface(Console.BufferWidth, Console.BufferHeight);
+int w = Console.WindowWidth;
+int h = Console.WindowHeight;
+
+Surface checkeredX = new Surface(w, h);
+Surface checkeredY = new Surface(w, h);
 for (int i = 0; i < checkeredX.Width; i++)
 {
     for (int j = 0; j < checkeredX.Height; j++)
@@ -21,18 +21,18 @@ Surface blue = new Surface(5, 5);
 blue.Fill('#', new Style(20, 20, 20, 60, 80, 200, 50));
 blue.Fill('.', 1, 1, 3, 3, new Style(20, 20, 20, 60, 80, 200));
 
-Surface screen;
+Surface screen = new Surface(w, h);
+int toggle = 0;
 
 while (true)
 {
-    screen = new Surface(Console.BufferWidth, Console.BufferHeight);
-    screen.Write(checkeredX, 0, 0);
-    screen.Write(blue, -2, 0);
+    screen.Fill(' ', default);
+    screen.Write(toggle == 0 ? checkeredX : checkeredY, 0, 0);
+    screen.Write(blue, toggle == 0 ? -2 : 2, toggle == 0 ? 0 : 27);
     ConsoleDriver.Frame(screen);
-    Console.ReadKey();
-    screen = new Surface(Console.BufferWidth, Console.BufferHeight);
-    screen.Write(checkeredY, 0, 0);
-    screen.Write(blue, 2, 27);
-    ConsoleDriver.Frame(screen);
-    Console.Read();
+
+    if (Console.ReadKey(true).Key == ConsoleKey.Escape)
+        break;
+
+    toggle ^= 1;
 }
