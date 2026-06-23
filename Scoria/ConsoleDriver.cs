@@ -1,17 +1,25 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Security.AccessControl;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Scoria;
 
 internal static class ConsoleDriver
 {
-    private static readonly StringBuilder _buffer = new StringBuilder();
-    private static readonly StreamWriter _writer;
+    internal static event Action<int, int, int, bool> OnMouseEvent;
+    
+    private static readonly StringBuilder Buffer = new StringBuilder();
+    private static readonly Stream StdOut;
+    private static readonly Stream StdIn;
     private static Style _currentStyle = new Style();
     private static int _width;
     private static int _height;
+    private static readonly Regex MouseInputRegex = new Regex(@"\[<(?<cb>\d+);(?<cx>\d+);(?<cy>\d+)(?<ev>[mM])", RegexOptions.Compiled);
+    private static readonly Regex ArrowKeysInputRegex = new Regex(@"ESC\[(?<key>[A-D])", RegexOptions.Compiled);
 
     static ConsoleDriver()
     {
@@ -19,9 +27,61 @@ internal static class ConsoleDriver
         {
             InitWindows();
         }
-        _writer = new StreamWriter(Console.OpenStandardOutput());
+        StdOut = Console.OpenStandardOutput();
+        StdIn = Console.OpenStandardInput();
+
+        Enable(TerminalFeature.SgrMouse, true);
+        Enable(TerminalFeature.AnyEventMouse, true);
+        Flush();
+        
         _width = Console.WindowWidth;
         _height = Console.WindowHeight;
+    }
+
+    internal static void PollInput()
+    {
+        Span<byte> bytes = stackalloc byte[256];
+        int length = StdIn.Read(bytes);
+        if (length > 0)
+        {
+            string input = Encoding.UTF8.GetString(bytes[..length]);
+            HandleInput(input);
+        }
+    }
+
+    private static void HandleInput(string input)
+    {
+        Match mouseMatch = MouseInputRegex.Match(input);
+        if (mouseMatch.Success)
+        {
+            GroupCollection collection = mouseMatch.Groups;
+            (string cb, string cx, string cy, string release) =
+                (collection["cb"].Value, collection["cx"].Value, collection["cy"].Value, collection["ev"].Value);
+            Console.WriteLine($"Mouse button [{release}] at ({cx}, {cy})");
+            return;
+        }
+
+        Match arrowKeysMatch = ArrowKeysInputRegex.Match(input);
+        if (arrowKeysMatch.Success)
+        {
+            GroupCollection collection = arrowKeysMatch.Groups;
+            Key key = arrowKeysMatch.Groups["key"].Value switch
+            {
+                "A" => Key.Left,
+                "B" => Key.Down,
+                "C" => Key.Right,
+                "D" => Key.Up,
+                _ => throw new UnreachableException(),
+            };
+        }
+
+        if (input.Length == 1)
+        {
+            Console.WriteLine($"Key pressed {input}");
+            return;
+        }
+        
+        Console.WriteLine($"Unrecognized input: '\\E{input[1..]}'");
     }
 
     internal static void Frame(Surface surface)
@@ -51,9 +111,9 @@ internal static class ConsoleDriver
 
     private static void Flush()
     {
-        _writer.Write(_buffer);
-        _writer.Flush();
-        _buffer.Clear();
+        StdOut.Write(Encoding.UTF8.GetBytes(Buffer.ToString()));
+        StdOut.Flush();
+        Buffer.Clear();
     }
     
     private static void Clear()
@@ -113,9 +173,9 @@ internal static class ConsoleDriver
         }
     }
 
-    private static void Write(char value)    => _buffer.Append(value);
-    private static void Write(string value)  => _buffer.Append(value);
-    private static void WriteRaw(int value)  => _buffer.Append((char)value);
+    private static void Write(char value)    => Buffer.Append(value);
+    private static void Write(string value)  => Buffer.Append(value);
+    private static void WriteRaw(int value)  => Buffer.Append((char)value);
     private static void Escape()             => WriteRaw(0x1b);
 
     private static void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
@@ -129,6 +189,27 @@ internal static class ConsoleDriver
     private static void SelectGraphicsRendition(GraphicsRendition rendition, params IEnumerable<int> codes)
     {
         ControlSequenceIntroducer('m', codes.Prepend((char)rendition));
+    }
+
+    private static void Enable(TerminalFeature feature, bool enable)
+    {
+        Escape();
+        Write('[');
+        Write('?');
+        Write(((int)feature).ToString());
+        Write(enable ? 'h' : 'l');
+    }
+
+    private enum TerminalFeature
+    {
+        ShowCursor = 25,            // Shows/hides the cursor. `Enable(ShowCursor, false)` hides it.
+        AlternateScreen = 1049,     // Switches to/from the alternate screen buffer. Used for full-screen TUI apps.
+        SgrMouse = 1006,           // Enables SGR-encoded mouse events (coordinates > 223 supported). Usually combined with ButtonEventMouse.
+        ButtonEventMouse = 1002,   // Reports mouse button presses and drags. Use with SgrMouse for extended coordinates.
+        AnyEventMouse = 1003,      // Reports all mouse motion events (not just clicks). Use sparingly — very noisy.
+        FocusEvents = 1004,        // Sends CSI I / CSI O sequences when the terminal gains/loses focus.
+        ApplicationCursorKeys = 1, // Switches cursor keys to application mode (sends CSI O A..D instead of CSI [ A..D).
+        BracketedPaste = 2004,     // Wraps pasted text in CSI 200~ / CSI 201~ so the app can distinguish paste from keystrokes.
     }
 
     private enum GraphicsRendition
@@ -158,14 +239,12 @@ internal static class ConsoleDriver
 
     // ---- Windows P/Invoke ----
 
-    private const int STD_INPUT_HANDLE  = -10;
-    private const int STD_OUTPUT_HANDLE = -11;
+    private const int StdInputHandle  = -10;
+    private const int StdOutputHandle = -11;
 
-    private const uint ENABLE_LINE_INPUT                 = 0x0002;
-    private const uint ENABLE_ECHO_INPUT                 = 0x0004;
-    private const uint ENABLE_VIRTUAL_TERMINAL_INPUT     = 0x0200;
-    private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
-    private const uint ENABLE_PROCESSED_OUTPUT           = 0x0001;
+    private const uint EnableLineInput                 = 0x0002;
+    private const uint EnableEchoInput                 = 0x0004;
+    private const uint EnableVirtualTerminalInput     = 0x0200;
 
     private static uint _originalInputMode;
     private static uint _originalOutputMode;
@@ -182,33 +261,21 @@ internal static class ConsoleDriver
     [SupportedOSPlatform("Windows")]
     private static void InitWindows()
     {
-        IntPtr inHandle  = GetStdHandle(STD_INPUT_HANDLE);
-        IntPtr outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+        IntPtr inHandle  = GetStdHandle(StdInputHandle);
 
         GetConsoleMode(inHandle,  out _originalInputMode);
-        GetConsoleMode(outHandle, out _originalOutputMode);
 
         uint inMode = _originalInputMode;
-        inMode &= ~ENABLE_LINE_INPUT;
-        inMode &= ~ENABLE_ECHO_INPUT;
-        inMode |= ENABLE_VIRTUAL_TERMINAL_INPUT;
-        SetConsoleMode(inHandle, inMode);
-
-        SetConsoleMode(outHandle,
-            _originalOutputMode | ENABLE_PROCESSED_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-
-        AppDomain.CurrentDomain.ProcessExit += (_, _) => RestoreConsole();
-        Console.CancelKeyPress += (_, args) =>
-        {
-            RestoreConsole();
-            args.Cancel = false;
-        };
+        inMode &= ~EnableLineInput;
+        inMode &= ~EnableEchoInput;
+        inMode |= EnableVirtualTerminalInput;
+        SetConsoleMode(inHandle, inMode);;
     }
 
     private static void RestoreConsole()
     {
-        IntPtr inHandle  = GetStdHandle(STD_INPUT_HANDLE);
-        IntPtr outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+        IntPtr inHandle  = GetStdHandle(StdInputHandle);
+        IntPtr outHandle = GetStdHandle(StdOutputHandle);
         SetConsoleMode(inHandle,  _originalInputMode);
         SetConsoleMode(outHandle, _originalOutputMode);
     }
