@@ -1,20 +1,63 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.Versioning;
-using System.Security.AccessControl;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Scoria;
 
+public sealed class MouseMoveEventArgs
+{
+    internal MouseMoveEventArgs(int x, int y, int prevX, int prevY)
+    {
+        X = x;
+        Y = y;
+        PrevX = prevX;
+        PrevY = prevY;
+    }
+
+    public int X { get; }
+    public int Y { get; }
+    public int PrevX { get; }
+    public int PrevY { get; }
+    public int DeltaX => X - PrevX;
+    public int DeltaY => Y - PrevY;
+
+    public override string ToString()
+    {
+        return $"Mouse move ({PrevX}, {PrevY}) -> ({X}, {Y})";
+    }
+}
+
+public sealed class MouseButtonEventArgs
+{
+    internal MouseButtonEventArgs(Button button, int x, int y, bool down)
+    {
+        Button = button;
+        X = x;
+        Y = y;
+        Down = down;
+    }
+
+    public Button Button { get; }
+    public int X { get; }
+    public int Y { get; }
+    public bool Down { get; }
+
+    public override string ToString()
+    {
+        string down = Down ? "down" : "up";
+        return $"Mouse {Button} {down} ({X}, {Y})";
+    }
+}
+
 internal static class ConsoleDriver
 {
-    internal static event Action<int, int, int, bool> OnMouseEvent;
+    private static int _mouseX = int.MaxValue, _mouseY = int.MaxValue;
+    internal static event Action<MouseMoveEventArgs>? OnMouseMove;
+    internal static event Action<MouseButtonEventArgs>? OnMouseButton;
+    
+    private static readonly IPlatformDriver _platformDriver;
     
     private static readonly StringBuilder Buffer = new StringBuilder();
-    private static readonly Stream StdOut;
-    private static readonly Stream StdIn;
     private static Style _currentStyle = new Style();
     private static int _width;
     private static int _height;
@@ -25,26 +68,61 @@ internal static class ConsoleDriver
     {
         if (OperatingSystem.IsWindows())
         {
-            InitWindows();
+            _platformDriver = new WindowsConsoleDriver();
         }
-        StdOut = Console.OpenStandardOutput();
-        StdIn = Console.OpenStandardInput();
+        else if (OperatingSystem.IsLinux())
+        {
+            _platformDriver = new LinuxConsoleDriver();
+        }
+        else
+        {
+            throw new PlatformNotSupportedException();
+        }
+
+        Init();
+        
+        _width = Console.WindowWidth;
+        _height = Console.WindowHeight;
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            Restore();
+        };
+
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = false;
+            Restore();
+        };
+    }
+
+    internal static void Init()
+    {
+        _platformDriver.Init();
 
         Enable(TerminalFeature.SgrMouse, true);
         Enable(TerminalFeature.AnyEventMouse, true);
         Flush();
-        
-        _width = Console.WindowWidth;
-        _height = Console.WindowHeight;
     }
 
-    internal static void PollInput()
+    internal static void Restore()
     {
-        Span<byte> bytes = stackalloc byte[256];
-        int length = StdIn.Read(bytes);
+        Enable(TerminalFeature.SgrMouse, false);
+        Enable(TerminalFeature.AnyEventMouse, false);
+        Flush();
+
+        _platformDriver.Restore();
+    }
+
+    internal static void PollInput() => PollInput(Timeout.InfiniteTimeSpan);
+
+    internal static void PollInput(TimeSpan timeout)
+    {
+        byte[] bytes = new byte[256];
+        int length = _platformDriver.PollInput(bytes, timeout);
         if (length > 0)
         {
-            string input = Encoding.UTF8.GetString(bytes[..length]);
+            string input = Encoding.UTF8.GetString(bytes.AsSpan(0, length));
             HandleInput(input);
         }
     }
@@ -55,10 +133,23 @@ internal static class ConsoleDriver
         if (mouseMatch.Success)
         {
             GroupCollection collection = mouseMatch.Groups;
-            (string cb, string cx, string cy, string release) =
-                (collection["cb"].Value, collection["cx"].Value, collection["cy"].Value, collection["ev"].Value);
-            Console.WriteLine($"Mouse button [{release}] at ({cx}, {cy})");
-            return;
+            int cb = int.Parse(collection["cb"].ValueSpan);
+            int cx = int.Parse(collection["cx"].ValueSpan);
+            int cy = int.Parse(collection["cy"].ValueSpan);
+            _mouseX = _mouseX == int.MaxValue ? cx : _mouseX;
+            _mouseY = _mouseY == int.MaxValue ? cy : _mouseY;
+            bool down = collection["ev"].Value == "M";
+
+            if ((cb & 32) == 32)
+            {
+                OnMouseMove?.Invoke(new MouseMoveEventArgs(cx, cy, _mouseX, _mouseY));
+                _mouseX = cx;
+                _mouseY = cy;
+            }
+            else
+            {
+                OnMouseButton?.Invoke(new MouseButtonEventArgs((Button)cb, _mouseX, _mouseY, down));
+            }
         }
 
         Match arrowKeysMatch = ArrowKeysInputRegex.Match(input);
@@ -111,8 +202,8 @@ internal static class ConsoleDriver
 
     private static void Flush()
     {
-        StdOut.Write(Encoding.UTF8.GetBytes(Buffer.ToString()));
-        StdOut.Flush();
+        byte[] data = Encoding.UTF8.GetBytes(Buffer.ToString());
+        _platformDriver.Write(data);
         Buffer.Clear();
     }
     
@@ -237,46 +328,4 @@ internal static class ConsoleDriver
         Background = 48
     }
 
-    // ---- Windows P/Invoke ----
-
-    private const int StdInputHandle  = -10;
-    private const int StdOutputHandle = -11;
-
-    private const uint EnableLineInput                 = 0x0002;
-    private const uint EnableEchoInput                 = 0x0004;
-    private const uint EnableVirtualTerminalInput     = 0x0200;
-
-    private static uint _originalInputMode;
-    private static uint _originalOutputMode;
-
-    [DllImport("kernel32.dll")]
-    static extern IntPtr GetStdHandle(int nStdHandle);
-
-    [DllImport("kernel32.dll")]
-    static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
-
-    [DllImport("kernel32.dll")]
-    static extern bool SetConsoleMode(IntPtr hConsoleHandle, uint dwMode);
-
-    [SupportedOSPlatform("Windows")]
-    private static void InitWindows()
-    {
-        IntPtr inHandle  = GetStdHandle(StdInputHandle);
-
-        GetConsoleMode(inHandle,  out _originalInputMode);
-
-        uint inMode = _originalInputMode;
-        inMode &= ~EnableLineInput;
-        inMode &= ~EnableEchoInput;
-        inMode |= EnableVirtualTerminalInput;
-        SetConsoleMode(inHandle, inMode);;
-    }
-
-    private static void RestoreConsole()
-    {
-        IntPtr inHandle  = GetStdHandle(StdInputHandle);
-        IntPtr outHandle = GetStdHandle(StdOutputHandle);
-        SetConsoleMode(inHandle,  _originalInputMode);
-        SetConsoleMode(outHandle, _originalOutputMode);
-    }
 }

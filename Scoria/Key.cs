@@ -21,7 +21,7 @@ public enum Key
     D8 = '8',
     D9 = '9',
 
-    // Uppercase letters
+    // Letters
     A = 'A',
     B = 'B',
     C = 'C',
