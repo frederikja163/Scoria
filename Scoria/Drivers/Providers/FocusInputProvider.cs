@@ -1,18 +1,30 @@
 ﻿namespace Scoria.Drivers.Providers;
 
-internal sealed class MatchConstInputProvider : IInputProvider
+internal sealed class FocusInputProvider : IInputProvider
 {
-    private readonly string _value;
-    private readonly EventArgs _constValue;
+    private const string FocusLost = $"\x1b[O";
+    private const string FocusGained = $"\x1b[I";
 
-    internal MatchConstInputProvider(string value, EventArgs constValue)
+    public bool Enable => true;
+    public int Order => 0;
+
+    public void Init()
     {
-        _value = value;
-        _constValue = constValue;
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.FocusEvents, true);
+    }
+
+    public void Restore()
+    {
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.FocusEvents, false);
     }
 
     public EventArgs? HandleInput(string input)
     {
-        return input == _value ? _constValue : null;
+        return input switch
+        {
+            FocusLost => new FocusChangedEventArgs(false),
+            FocusGained => new FocusChangedEventArgs(true),
+            _ => null,
+        };
     }
 }

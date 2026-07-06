@@ -4,10 +4,25 @@ namespace Scoria.Drivers.Providers;
 
 internal sealed class MouseInputProvider : IInputProvider
 {
-    private static readonly Regex MouseInputRegex = new Regex(@"ESC\[<(?<cb>\d+);(?<cx>\d+);(?<cy>\d+)(?<ev>[mM])", RegexOptions.Compiled);
+    private static readonly Regex MouseInputRegex = new Regex(@"\x1b\[<(?<cb>\d+);(?<cx>\d+);(?<cy>\d+)(?<ev>[mM])", RegexOptions.Compiled);
     private static int _mouseX = int.MaxValue;
     private static int _mouseY = int.MaxValue;
     
+    public bool Enable => true;
+    public int Order => 0;
+
+    public void Init()
+    {
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.SgrMouse, true);
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.AnyEventMouse, true);
+    }
+
+    public void Restore()
+    {
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.SgrMouse, false);
+        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.AnyEventMouse, false);
+    }
+
     public EventArgs? HandleInput(string input)
     {
         Match mouseMatch = MouseInputRegex.Match(input);

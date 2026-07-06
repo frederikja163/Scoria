@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using Scoria.Drivers.Providers;
 
@@ -6,55 +7,58 @@ namespace Scoria.Drivers;
 
 internal static class ConsoleDriver
 {
-    private static readonly string FocusLost = $"\x1b[O";
-    private static readonly string FocusGained = $"\x1b[I";
-    private static IInputProvider[] _inputProviders =
-    [
-        new PasteInputProvider(),
-        new MatchConstInputProvider(FocusLost, new FocusChangedEventArgs(false)),
-        new MatchConstInputProvider(FocusGained, new FocusChangedEventArgs(true)),
-        new MouseInputProvider(),
-    ];
+    private static readonly ISettingProvider[] SettingProviders;
+    private static readonly IInputProvider[] InputProviders;
+    private static readonly IPlatformDriver PlatformDriver;
     internal static event Action<EventArgs>? OnEvent;
     
-    private static readonly IPlatformDriver PlatformDriver;
     
     private static readonly StringBuilder Buffer = new StringBuilder();
     private static Style _currentStyle = new Style();
     private static int _width;
     private static int _height;
 
-    private static readonly IReadOnlyDictionary<PrivateMode, bool> PrivateModes =
-        new Dictionary<PrivateMode, bool>()
-        {
-            [PrivateMode.SendEscOnMeta] = true, // TODO
-            [PrivateMode.FocusEvents] = true,
-            [PrivateMode.BracketedPaste] = true,
-            [PrivateMode.ShowCursor] = false,
-            [PrivateMode.SgrMouse] = true,
-            [PrivateMode.AnyEventMouse] = true,
-        };
-    private static readonly IReadOnlyDictionary<Mode, bool> Modes =
-        new Dictionary<Mode, bool>()
-        {
-            [Mode.KeyboardAction] = true,
-        };
-    
     static ConsoleDriver()
     {
-        if (OperatingSystem.IsWindows())
+        static object? TryCreate(Type type)
         {
-            PlatformDriver = new WindowsConsoleDriver();
+            try
+            {
+                return Activator.CreateInstance(type);
+            }
+            catch
+            {
+                return null;
+            }
         }
-        else if (OperatingSystem.IsLinux())
+
+        static IPlatformDriver CreatePlatform()
         {
-            PlatformDriver = new LinuxConsoleDriver();
-        }
-        else
-        {
+            if (OperatingSystem.IsLinux())
+            {
+                return new LinuxConsoleDriver();
+            }
+
+            if (OperatingSystem.IsWindows())
+            {
+                return new WindowsConsoleDriver();
+            }
+        
             throw new PlatformNotSupportedException();
         }
 
+        SettingProviders = Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(t => t.IsAssignableTo(typeof(ISettingProvider)))
+            .Select(TryCreate)
+            .Where(i => i is not null)
+            .OfType<ISettingProvider>()
+            .OrderBy(i => i.Order)
+            .ToArray();
+        
+        PlatformDriver = CreatePlatform();
+        InputProviders = SettingProviders.OfType<IInputProvider>().ToArray();
+        
         Init();
         
         _width = Console.WindowWidth;
@@ -67,39 +71,34 @@ internal static class ConsoleDriver
 
         Console.CancelKeyPress += (_, e) =>
         {
-            e.Cancel = false;
-            Restore();
+            e.Cancel = true;
         };
     }
 
     internal static void Init()
     {
         PlatformDriver.Init();
-
-        foreach ((PrivateMode feature, var value) in PrivateModes)
+        
+        foreach (ISettingProvider provider in SettingProviders)
         {
-            Enable(feature, value);
+            if (provider.Enable)
+            {
+                provider.Init();
+            }
         }
-        foreach ((Mode feature, var value) in Modes)
-        {
-            Enable(feature, value);
-        }
-        Enable((PrivateMode)9001, true);
         Flush();
     }
 
     internal static void Restore()
     {
-        foreach ((PrivateMode feature, var value) in PrivateModes)
+        foreach (ISettingProvider provider in SettingProviders)
         {
-            Enable(feature, !value);
-        }
-        foreach ((Mode feature, var value) in Modes)
-        {
-            Enable(feature, !value);
+            if (provider.Enable)
+            {
+                provider.Restore();
+            }
         }
         Flush();
-
         PlatformDriver.Restore();
     }
 
@@ -118,11 +117,12 @@ internal static class ConsoleDriver
 
     private static void HandleInput(string input)
     {
-        foreach (IInputProvider inputProvider in _inputProviders)
+        foreach (IInputProvider inputProvider in InputProviders)
         {
             if (inputProvider.HandleInput(input) is {} args)
             {
                 OnEvent?.Invoke(args);
+                return;
             }
         }
 
@@ -219,9 +219,9 @@ internal static class ConsoleDriver
         }
     }
 
-    private static void Write(char value)    => Buffer.Append(value);
-    private static void Write(string value)  => Buffer.Append(value);
-    private static void WriteRaw(int value)  => Buffer.Append((char)value);
+    internal static void Write(char value)    => Buffer.Append(value);
+    internal static void Write(string value)  => Buffer.Append(value);
+    internal static void WriteRaw(int value)  => Buffer.Append((char)value);
     private static void Escape()             => WriteRaw(0x1b);
 
     private static void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
@@ -237,7 +237,7 @@ internal static class ConsoleDriver
         ControlSequenceIntroducer('m', codes.Prepend((char)rendition));
     }
 
-    private static void Enable(PrivateMode feature, bool enable)
+    internal static void Enable(PrivateMode feature, bool enable)
     {
         Escape();
         Write('[');
@@ -246,7 +246,7 @@ internal static class ConsoleDriver
         Write(enable ? 'h' : 'l');
     }
 
-    private static void Enable(Mode feature, bool enable)
+    internal static void Enable(Mode feature, bool enable)
     {
         Escape();
         Write('[');
@@ -254,7 +254,7 @@ internal static class ConsoleDriver
         Write(enable ? 'h' : 'l');
     }
 
-    private enum Mode
+    internal enum Mode
     {
         KeyboardAction = 2,     // Keyboard Action Mode (AM)
         Insert = 4,             // Insert Mode (IRM)
@@ -262,7 +262,7 @@ internal static class ConsoleDriver
         AutomaticNewline = 20,  // Automatic Newline (LNM)
     }
 
-    private enum PrivateMode
+    internal enum PrivateMode
     {
         ApplicationCursorKeys = 1,      // Application Cursor Keys (DECCKM)
         DesignateUSASCII = 2,           // Designate USASCII for character sets G0-G3 (DECANM), and set VT100 mode
