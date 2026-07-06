@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace Scoria;
+namespace Scoria.Drivers;
 
 [SupportedOSPlatform("Linux")]
 internal sealed class LinuxConsoleDriver : IPlatformDriver

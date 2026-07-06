@@ -1,4 +1,4 @@
-namespace Scoria;
+namespace Scoria.Drivers;
 
 internal interface IPlatformDriver
 {

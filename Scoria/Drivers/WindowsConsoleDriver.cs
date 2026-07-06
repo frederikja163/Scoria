@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace Scoria;
+namespace Scoria.Drivers;
 
 [SupportedOSPlatform("Windows")]
 internal sealed class WindowsConsoleDriver : IPlatformDriver

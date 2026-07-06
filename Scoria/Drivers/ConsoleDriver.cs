@@ -1,113 +1,21 @@
-﻿using System.Diagnostics;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
+using Scoria.Drivers.Providers;
 
-namespace Scoria;
-
-public sealed class MouseMoveEventArgs : EventArgs
-{
-    internal MouseMoveEventArgs(int x, int y, int prevX, int prevY)
-    {
-        X = x;
-        Y = y;
-        PrevX = prevX;
-        PrevY = prevY;
-    }
-
-    public int X { get; }
-    public int Y { get; }
-    public int PrevX { get; }
-    public int PrevY { get; }
-    public int DeltaX => X - PrevX;
-    public int DeltaY => Y - PrevY;
-
-    public override string ToString()
-    {
-        return $"Mouse move ({PrevX}, {PrevY}) -> ({X}, {Y})";
-    }
-}
-
-public sealed class MouseButtonEventArgs : EventArgs
-{
-    internal MouseButtonEventArgs(Button button, int x, int y, bool down)
-    {
-        Button = button;
-        X = x;
-        Y = y;
-        Down = down;
-    }
-
-    public Button Button { get; }
-    public int X { get; }
-    public int Y { get; }
-    public bool Down { get; }
-
-    public override string ToString()
-    {
-        string down = Down ? "down" : "up";
-        return $"Mouse {Button} {down} ({X}, {Y})";
-    }
-}
-
-public sealed class MouseScrollEventArgs : EventArgs
-{
-    internal MouseScrollEventArgs(int x, int y, bool down)
-    {
-        X = x;
-        Y = y;
-        Down = down;
-    }
-    
-    public int X { get; }
-    public int Y { get; }
-    public bool Down { get; }
-
-    public override string ToString()
-    {
-        string down = Down ? "down" : "up";
-        return $"Mouse scroll {down}";
-    }
-}
-
-public sealed class FocusChangedEventArgs : EventArgs
-{
-    internal FocusChangedEventArgs(bool focused)
-    {
-        Focused = focused;
-    }
-
-    public bool Focused { get; }
-
-    public override string ToString()
-    {
-        string focused = Focused ? "Gained" : "Lost";
-        return $"Focus {focused}";
-    }
-}
-
-public sealed class PasteEventArgs : EventArgs
-{
-    internal PasteEventArgs(string text)
-    {
-        Text = text;
-    }
-    
-    public string Text { get; }
-
-    public override string ToString()
-    {
-        return $"Pasted '{Text}'";
-    }
-}
+namespace Scoria.Drivers;
 
 internal static class ConsoleDriver
 {
-    private static int _mouseX = int.MaxValue, _mouseY = int.MaxValue;
-    internal static event Action<MouseMoveEventArgs>? OnMouseMove;
-    internal static event Action<MouseButtonEventArgs>? OnMouseButton;
-    internal static event Action<MouseScrollEventArgs>? OnMouseScroll;
-    internal static event Action<FocusChangedEventArgs>? OnFocusChanged;
-    internal static event Action<PasteEventArgs>? OnPaste;
+    private static readonly string FocusLost = $"\x1b[O";
+    private static readonly string FocusGained = $"\x1b[I";
+    private static IInputProvider[] _inputProviders =
+    [
+        new PasteInputProvider(),
+        new MatchConstInputProvider(FocusLost, new FocusChangedEventArgs(false)),
+        new MatchConstInputProvider(FocusGained, new FocusChangedEventArgs(true)),
+        new MouseInputProvider(),
+    ];
+    internal static event Action<EventArgs>? OnEvent;
     
     private static readonly IPlatformDriver PlatformDriver;
     
@@ -115,12 +23,6 @@ internal static class ConsoleDriver
     private static Style _currentStyle = new Style();
     private static int _width;
     private static int _height;
-    private const char Esc = '\x1b';
-    private static readonly Regex MouseInputRegex = new Regex($@"{Esc}\[<(?<cb>\d+);(?<cx>\d+);(?<cy>\d+)(?<ev>[mM])", RegexOptions.Compiled);
-    private static readonly string FocusLost = $"{Esc}[O";
-    private static readonly string FocusGained = $"{Esc}[I";
-    private static readonly string PasteStart = $"{Esc}[200~";
-    private static readonly string PasteStop = $"{Esc}[201~";
 
     private static readonly IReadOnlyDictionary<PrivateMode, bool> PrivateModes =
         new Dictionary<PrivateMode, bool>()
@@ -216,75 +118,16 @@ internal static class ConsoleDriver
 
     private static void HandleInput(string input)
     {
-        if (HandleMouseInput(input)) return;
-        if (HandleFocusInput(input)) return;
-        if (HandlePasteInput(input)) return;
+        foreach (IInputProvider inputProvider in _inputProviders)
+        {
+            if (inputProvider.HandleInput(input) is {} args)
+            {
+                OnEvent?.Invoke(args);
+            }
+        }
 
         input = string.Join(' ', input.Select(c => char.IsLetterOrDigit(c) ? c.ToString() : ((int)c).ToString("X2")));
         Console.WriteLine($"Unrecognized input: '{input}'");
-    }
-
-    private static bool HandlePasteInput(string input)
-    {
-        if (input.StartsWith(PasteStart) && input.EndsWith(PasteStop))
-        {
-            OnPaste?.Invoke(new PasteEventArgs(input[PasteStart.Length..^PasteStop.Length]));
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool HandleFocusInput(string input)
-    {
-        if (input == FocusGained)
-        {
-            OnFocusChanged?.Invoke(new FocusChangedEventArgs(true));
-            return true;
-        }
-
-        if (input == FocusLost)
-        {
-            OnFocusChanged?.Invoke(new FocusChangedEventArgs(false));
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool HandleMouseInput(string input)
-    {
-        Match mouseMatch = MouseInputRegex.Match(input);
-        if (mouseMatch.Success)
-        {
-            GroupCollection collection = mouseMatch.Groups;
-            int cb = int.Parse(collection["cb"].ValueSpan);
-            int cx = int.Parse(collection["cx"].ValueSpan);
-            int cy = int.Parse(collection["cy"].ValueSpan);
-            _mouseX = _mouseX == int.MaxValue ? cx : _mouseX;
-            _mouseY = _mouseY == int.MaxValue ? cy : _mouseY;
-            bool down = collection["ev"].Value == "M";
-            
-            if ((cb & 32) == 32)
-            {
-                OnMouseMove?.Invoke(new MouseMoveEventArgs(cx, cy, _mouseX, _mouseY));
-                _mouseX = cx;
-                _mouseY = cy;
-                return true;
-            }
-            if ((Button)cb is Button.Left or Button.Right or Button.Middle)
-            {
-                OnMouseButton?.Invoke(new MouseButtonEventArgs((Button)cb, _mouseX, _mouseY, down));
-                return true;
-            }
-            if (cb is 64 or 65)
-            {
-                OnMouseScroll?.Invoke(new MouseScrollEventArgs(_mouseX, _mouseY, cb == 65));
-                return true;
-            }
-        }
-
-        return false;
     }
 
     internal static void Frame(Surface surface)
@@ -379,7 +222,7 @@ internal static class ConsoleDriver
     private static void Write(char value)    => Buffer.Append(value);
     private static void Write(string value)  => Buffer.Append(value);
     private static void WriteRaw(int value)  => Buffer.Append((char)value);
-    private static void Escape()             => Write(Esc);
+    private static void Escape()             => WriteRaw(0x1b);
 
     private static void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
     {

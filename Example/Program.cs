@@ -1,13 +1,10 @@
 ﻿using Scoria;
+using Scoria.Drivers;
 
-ConsoleDriver.OnMouseMove += Console.WriteLine;
-ConsoleDriver.OnMouseButton += Console.WriteLine;
-ConsoleDriver.OnMouseScroll += Console.WriteLine;
-ConsoleDriver.OnPaste += Console.WriteLine;
-ConsoleDriver.OnFocusChanged += Console.WriteLine;
-ConsoleDriver.OnMouseButton += eventArgs =>
+ConsoleDriver.OnEvent += Console.WriteLine;
+ConsoleDriver.OnEvent += eventArgs =>
 {
-    if (eventArgs.Button == Button.Middle && eventArgs.Down)
+    if (eventArgs is MouseButtonEventArgs args && args.Button == Button.Middle)
     {
         Environment.Exit(0);
     }
