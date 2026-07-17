@@ -1,4 +1,6 @@
-﻿namespace Scoria.Drivers.Providers;
+﻿using Scoria.Events;
+
+namespace Scoria.Drivers.Providers;
 
 internal sealed class FocusInputProvider : IInputProvider
 {

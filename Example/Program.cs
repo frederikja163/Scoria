@@ -1,5 +1,6 @@
 ﻿using Scoria;
 using Scoria.Drivers;
+using Scoria.Events;
 
 ConsoleDriver.OnEvent += Console.WriteLine;
 ConsoleDriver.OnEvent += eventArgs =>

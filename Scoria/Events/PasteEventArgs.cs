@@ -1,4 +1,4 @@
-﻿namespace Scoria.Drivers;
+﻿namespace Scoria.Events;
 
 /// <summary>Provides data for terminal bracket-paste events.</summary>
 public sealed class PasteEventArgs : EventArgs

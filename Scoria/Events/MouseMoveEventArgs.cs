@@ -1,4 +1,4 @@
-﻿namespace Scoria.Drivers;
+﻿namespace Scoria.Events;
 
 /// <summary>Provides data for mouse move events.</summary>
 public sealed class MouseMoveEventArgs : EventArgs
