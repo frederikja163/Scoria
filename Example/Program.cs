@@ -11,10 +11,11 @@ ConsoleDriver driver = new ConsoleDriver(
     new FocusInputProvider(),
     new KeyInputProvider(),
     new MouseInputProvider(),
-    new PasteInputProvider(),
-    new LogInputProvider());
+    new PasteInputProvider()
+    // new LogInputProvider(),
+);
 
-driver.OnEvent += Console.WriteLine;
+// driver.OnEvent += Console.WriteLine;
 driver.OnEvent += eventArgs =>
 {
     if (eventArgs is MouseButtonEventArgs args && args.Button == Button.Middle)
@@ -23,10 +24,21 @@ driver.OnEvent += eventArgs =>
     }
 };
 
+Surface surface = new Surface(driver.Width, driver.Height);
+for (int i = 0; i < surface.Width; i++)
+{
+    for (int j = 0; j < surface.Height; j++)
+    {
+        surface.Write(' ', i, j, new Style(0, 0, 0, (byte)Random.Shared.Next(255), (byte)Random.Shared.Next(255), (byte)Random.Shared.Next(255)));
+    }
+}
+surface.Borders("Test", true);
+surface.ExpandBorders();
+
 while (true)
 {
+    driver.Frame(surface);
     driver.PollInput();
-    // await ConsoleDriver.PollInputAsync(100);
 }
 
 

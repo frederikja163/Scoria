@@ -33,6 +33,8 @@ public enum StyleAttributes : byte
 [StructLayout(LayoutKind.Sequential)]
 public struct Style() : IEquatable<Style>
 {
+    public static Style Default => new Style(255, 255, 255, 0, 0, 0, 255, Scoria.StyleAttributes.None);
+    
     /// <summary>Red component of the foreground (text) color (0-255). Defaults to 255.</summary>
     public byte ForegroundRed { get; set; } = 255;
     /// <summary>Green component of the foreground (text) color (0-255). Defaults to 255.</summary>

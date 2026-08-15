@@ -59,11 +59,11 @@ public static class SurfaceExtensions
         (int offsetY, int height) = y.GetOffsetAndLength(surface.Height);
         return new SubSurface(surface, offsetX, offsetY, width, height);
     }
-    
-    /// <summary>Fills the entire surface with the specified character and style.</summary>
+
+    /// <summary>Fills a rectangular region of the surface with the specified character and style.</summary>
     /// <param name="surface">The surface to fill.</param>
     /// <param name="c">The character to fill with.</param>
-    /// <param name="style">The style to apply to every cell.</param>
+    /// <param name="style">The style to apply to every cell in the region.</param>
     public static void Fill(this ISurface surface, char c, Style style)
     {
         surface.Fill(c, 0, 0, surface.Width, surface.Height, style);
@@ -72,21 +72,21 @@ public static class SurfaceExtensions
     /// <summary>Fills a rectangular region of the surface with the specified character and style.</summary>
     /// <param name="surface">The surface to fill.</param>
     /// <param name="c">The character to fill with.</param>
-    /// <param name="xMin">The minimum X coordinate (inclusive) of the region.</param>
-    /// <param name="yMin">The minimum Y coordinate (inclusive) of the region.</param>
-    /// <param name="xMax">The maximum X coordinate (exclusive) of the region.</param>
-    /// <param name="yMax">The maximum Y coordinate (exclusive) of the region.</param>
+    /// <param name="startX">The X coordinate of the start of the region.</param>
+    /// <param name="startY">The Y coordinate of the start of the region.</param>
+    /// <param name="endX">The X coordinate of the end of the region (exclusive).</param>
+    /// <param name="endY">The Y coordinate of the end of the region (exclusive).</param>
     /// <param name="style">The style to apply to every cell in the region.</param>
-    public static void Fill(this ISurface surface, char c, int xMin, int yMin, int xMax, int yMax, Style style)
+    public static void Fill(this ISurface surface, char c, int startX, int startY, int endX, int endY, Style style)
     {
-        xMin = Math.Max(0, xMin);
-        yMin = Math.Max(0, yMin);
-        xMax = Math.Min(xMax, surface.Width);
-        yMax = Math.Min(yMax, surface.Height);
+        int x0 = Math.Max(startX, 0);
+        int y0 = Math.Max(startY, 0);
+        int x1 = Math.Min(endX, surface.Width);
+        int y1 = Math.Min(endY, surface.Height);
 
-        for (int x = xMin; x < xMax; x++)
+        for (int x = x0; x < x1; x++)
         {
-            for (int y = yMin; y < yMax; y++)
+            for (int y = y0; y < y1; y++)
             {
                 surface.Write(c, x, y, style);
             }
@@ -111,5 +111,37 @@ public static class SurfaceExtensions
                 target.Write(source.GetChar(x - xOffset, y - yOffset), x, y, source.GetStyle(x - xOffset, y - yOffset));
             }
         }
+    }
+
+    public static bool Contains(this ISurface surface, int x, int y)
+    {
+        return (uint)x < surface.Width && (uint)y < surface.Height;
+    }
+
+    public static void Borders(this ISurface surface, string title = "", bool thin = false, Style? style = null)
+    {
+        char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
+        style ??= Theme.CurrentTheme.BorderStyle;
+
+        for (int x = 0; x < surface.Width; x++)
+        {
+            surface.Write(borderCharacter, x, 0, style.Value);
+            surface.Write(borderCharacter, x, surface.Height - 1, style.Value);
+        }
+        for (int y = 0; y < surface.Height; y++)
+        {
+            surface.Write(borderCharacter, 0, y, style.Value);
+            surface.Write(borderCharacter, surface.Width - 1, y, style.Value);
+        }
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            Theme.CurrentTheme.Borders.WriteTitle(surface, title);
+        }
+    }
+
+    public static void ExpandBorders(this ISurface surface)
+    {
+        Theme.CurrentTheme.Borders.ExpandBorders(surface);
     }
 }

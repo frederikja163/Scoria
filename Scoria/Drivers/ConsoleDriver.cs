@@ -55,6 +55,9 @@ internal class ConsoleDriver : IConsoleDriver
         Console.CancelKeyPress += (_, e) => { e.Cancel = true; };
     }
 
+    public int Width => _width;
+    public int Height => _height;
+
     internal void Init()
     {
         PlatformDriver.Init();
@@ -114,6 +117,7 @@ internal class ConsoleDriver : IConsoleDriver
 
     internal void Frame(Surface surface)
     {
+        // TODO: Handle too big frames
         Clear();
         Display(surface);
         Flush();
@@ -121,6 +125,7 @@ internal class ConsoleDriver : IConsoleDriver
 
     private void Display(Surface surface)
     {
+        // TODO: Make system to only write surface difference.
         SelectGraphicsRendition(GraphicsRendition.Reset);
         _currentStyle = new Style();
         for (int y = 0; y < _height; y++)
