@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
+using System.Text;
 
 namespace Scoria.Drivers;
 
@@ -26,6 +27,8 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
 
     private ConsoleInputModes _originalInputMode;
     private uint _originalOutputMode;
+    private uint _originalInputCp;
+    private uint _originalOutputCp;
     private readonly Stream _stdout = Console.OpenStandardOutput();
 
     [DllImport("kernel32.dll")]
@@ -43,6 +46,18 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
     [DllImport("kernel32.dll")]
     private static extern bool ReadFile(IntPtr hFile, byte[] lpBuffer, int nNumberOfBytesToRead, out int lpNumberOfBytesRead, IntPtr lpOverlapped);
 
+    [DllImport("kernel32.dll")]
+    private static extern uint GetConsoleCP();
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleCP(uint codePage);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint GetConsoleOutputCP();
+
+    [DllImport("kernel32.dll")]
+    private static extern bool SetConsoleOutputCP(uint codePage);
+
     public void Init()
     {
         IntPtr inHandle = GetStdHandle(StdInputHandle);
@@ -58,6 +73,11 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
 
         IntPtr outHandle = GetStdHandle(StdOutputHandle);
         GetConsoleMode(outHandle, out _originalOutputMode);
+
+        _originalInputCp = GetConsoleCP();
+        _originalOutputCp = GetConsoleOutputCP();
+        SetConsoleCP(65001);
+        SetConsoleOutputCP(65001);
     }
 
     public int PollInput(byte[] buffer, TimeSpan timeout)
@@ -89,5 +109,7 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
         IntPtr outHandle = GetStdHandle(StdOutputHandle);
         SetConsoleMode(inHandle, (uint)_originalInputMode);
         SetConsoleMode(outHandle, _originalOutputMode);
+        SetConsoleCP(_originalInputCp);
+        SetConsoleOutputCP(_originalOutputCp);
     }
 }

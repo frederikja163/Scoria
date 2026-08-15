@@ -171,12 +171,12 @@ public static class KeyExtensions
         /// The <see cref="Key"/> matching the character, or <see cref="Key.Unicode"/>
         /// if no named key maps to the character.
         /// </returns>
-        public static Key ToKey(char c, out char? ch)
+        public static Key FromChar(char c, out char? ch)
         {
             (Key key, ch) = c switch
             {
                 >= 'a' and <= 'z' => ((Key)(c - 'a' + (int)Key.A), (char?)c),
-                >= 'A' and <= 'Z' => ((Key)(c - 'A' + (int)Key.A), (char?)c),
+                >= 'A' and <= 'Z' => ((Key)(c - 'A' + (int)(Key.A | Key.Shift)), (char?)c),
                 >= '0' and <= '9' => ((Key)(c - '0' + (int)Key.D0), (char?)c),
                 ' '               => (Key.Space, (char?)' '),
                 '\r' or '\n'      => (Key.Enter, '\n'),

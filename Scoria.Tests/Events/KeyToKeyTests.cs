@@ -11,7 +11,7 @@ public class KeyToKeyTests
     [TestCase('m', Key.M)]
     public void LowercaseLetter_MapsCorrectly(char c, Key expected)
     {
-        Key key = Key.ToKey(c, out var ch);
+        Key key = Key.FromChar(c, out var ch);
         Assert.That(key, Is.EqualTo(expected));
         Assert.That(ch, Is.EqualTo(c));
     }
@@ -21,7 +21,7 @@ public class KeyToKeyTests
     [TestCase('M', Key.M)]
     public void UppercaseLetter_MapsCorrectly(char c, Key expected)
     {
-        Key key = Key.ToKey(c, out var ch);
+        Key key = Key.FromChar(c, out var ch);
         Assert.That(key, Is.EqualTo(expected));
         Assert.That(ch, Is.EqualTo(c));
     }
@@ -31,7 +31,7 @@ public class KeyToKeyTests
     [TestCase('9', Key.D9)]
     public void Digit_MapsCorrectly(char c, Key expected)
     {
-        Key key = Key.ToKey(c, out var ch);
+        Key key = Key.FromChar(c, out var ch);
         Assert.That(key, Is.EqualTo(expected));
         Assert.That(ch, Is.EqualTo(c));
     }
@@ -39,7 +39,7 @@ public class KeyToKeyTests
     [Test]
     public void Space_MapsToSpace()
     {
-        Key key = Key.ToKey(' ', out var ch);
+        Key key = Key.FromChar(' ', out var ch);
         Assert.That(key, Is.EqualTo(Key.Space));
         Assert.That(ch, Is.EqualTo(' '));
     }
@@ -48,7 +48,7 @@ public class KeyToKeyTests
     [TestCase('\n')]
     public void CarriageReturnAndNewline_MapsToEnter(char c)
     {
-        Key key = Key.ToKey(c, out var ch);
+        Key key = Key.FromChar(c, out var ch);
         Assert.That(key, Is.EqualTo(Key.Enter));
         Assert.That(ch, Is.EqualTo('\n'));
     }
@@ -56,7 +56,7 @@ public class KeyToKeyTests
     [Test]
     public void Tab_MapsToTab()
     {
-        Key key = Key.ToKey('\t', out var ch);
+        Key key = Key.FromChar('\t', out var ch);
         Assert.That(key, Is.EqualTo(Key.Tab));
         Assert.That(ch, Is.EqualTo('\t'));
     }
@@ -64,7 +64,7 @@ public class KeyToKeyTests
     [Test]
     public void Escape_MapsToEscapeWithNullChar()
     {
-        Key key = Key.ToKey('\x1B', out var ch);
+        Key key = Key.FromChar('\x1B', out var ch);
         Assert.That(key, Is.EqualTo(Key.Escape));
         Assert.That(ch, Is.Null);
     }
@@ -72,7 +72,7 @@ public class KeyToKeyTests
     [Test]
     public void BackspaceAscii_MapsToBackspaceWithNullChar()
     {
-        Key key = Key.ToKey('\x7F', out var ch);
+        Key key = Key.FromChar('\x7F', out var ch);
         Assert.That(key, Is.EqualTo(Key.Backspace));
         Assert.That(ch, Is.Null);
     }
@@ -80,7 +80,7 @@ public class KeyToKeyTests
     [Test]
     public void BackspaceControl_MapsToBackspaceWithNullChar()
     {
-        Key key = Key.ToKey('\x08', out var ch);
+        Key key = Key.FromChar('\x08', out var ch);
         Assert.That(key, Is.EqualTo(Key.Backspace));
         Assert.That(ch, Is.Null);
     }
@@ -90,7 +90,7 @@ public class KeyToKeyTests
     [TestCase('ñ')]
     public void UnmappedCharacter_MapsToUnicode(char c)
     {
-        Key key = Key.ToKey(c, out var ch);
+        Key key = Key.FromChar(c, out var ch);
         Assert.That(key, Is.EqualTo(Key.Unicode));
         Assert.That(ch, Is.EqualTo(c));
     }
@@ -98,8 +98,8 @@ public class KeyToKeyTests
     [Test]
     public void CaseInsensitiveLetter_ProducesSameKey()
     {
-        Key lower = Key.ToKey('a', out _);
-        Key upper = Key.ToKey('A', out _);
+        Key lower = Key.FromChar('a', out _);
+        Key upper = Key.FromChar('A', out _);
         Assert.That(lower, Is.EqualTo(upper));
     }
 }

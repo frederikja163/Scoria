@@ -1,6 +1,10 @@
-﻿using Scoria;
+﻿using System.Text;
+using Scoria;
 using Scoria.Drivers;
 using Scoria.Events;
+
+Console.InputEncoding = Encoding.UTF8;
+Console.OutputEncoding = Encoding.UTF8;
 
 ConsoleDriver.OnEvent += Console.WriteLine;
 ConsoleDriver.OnEvent += eventArgs =>
