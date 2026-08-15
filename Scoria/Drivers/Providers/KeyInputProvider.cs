@@ -72,9 +72,10 @@ internal sealed class KeyInputProvider : IInputProvider
 
         foreach ((string sequence, Key key) in EscapeSequences)
         {
-            if (input.StartsWith(sequence))
+            int pos = 0;
+            if (input.TryReadString(ref pos, sequence))
             {
-                input = input[sequence.Length..];
+                input = input[pos..];
                 return new KeyEventArgs(key, null);
             }
         }

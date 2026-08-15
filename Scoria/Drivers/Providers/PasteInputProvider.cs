@@ -22,19 +22,20 @@ internal sealed class PasteInputProvider : IInputProvider
 
     public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
-        if (!input.StartsWith(PasteStart))
+        int pos = 0;
+        if (!input.TryReadString(ref pos, PasteStart))
         {
             return null;
         }
 
-        int stopIndex = input[PasteStart.Length..].IndexOf(PasteStop);
+        int stopIndex = input[pos..].IndexOf(PasteStop);
         if (stopIndex < 0)
         {
             return null;
         }
-        stopIndex += PasteStart.Length;
+        stopIndex += pos;
 
-        string text = input[PasteStart.Length..stopIndex].ToString();
+        string text = input[pos..stopIndex].ToString();
         input = input[(stopIndex + PasteStop.Length)..];
         return new PasteEventArgs(text);
     }

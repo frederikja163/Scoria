@@ -21,15 +21,17 @@ internal sealed class FocusInputProvider : IInputProvider
 
     public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
-        if (input.StartsWith(FocusLost))
+        int pos = 0;
+        if (input.TryReadString(ref pos, FocusLost))
         {
-            input = input[FocusLost.Length..];
+            input = input[pos..];
             return new FocusChangedEventArgs(false);
         }
 
-        if (input.StartsWith(FocusGained))
+        pos = 0;
+        if (input.TryReadString(ref pos, FocusGained))
         {
-            input = input[FocusGained.Length..];
+            input = input[pos..];
             return new FocusChangedEventArgs(true);
         }
         return null;

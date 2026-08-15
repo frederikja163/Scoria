@@ -4,7 +4,6 @@ namespace Scoria.Drivers.Providers;
 
 internal sealed class MouseInputProvider : IInputProvider
 {
-    private const string SgrPrefix = "\x1b[<";
     private static int _mouseX = int.MaxValue;
     private static int _mouseY = int.MaxValue;
 
@@ -57,23 +56,21 @@ internal sealed class MouseInputProvider : IInputProvider
         cb = cx = cy = 0;
         down = false;
 
-        if (!input.StartsWith(SgrPrefix))
+        int pos = 0;
+        if (!input.TryReadString(ref pos, "\x1b[<"))
         {
             return false;
         }
 
-        int pos = SgrPrefix.Length;
-        if (!TryReadNumber(input, ref pos, out cb) || pos >= input.Length || input[pos] != ';')
+        if (!input.TryReadNumber(ref pos, out cb) || !input.TryReadString(ref pos, ";"))
         {
             return false;
         }
-        pos++;
-        if (!TryReadNumber(input, ref pos, out cx) || pos >= input.Length || input[pos] != ';')
+        if (!input.TryReadNumber(ref pos, out cx) || !input.TryReadString(ref pos, ";"))
         {
             return false;
         }
-        pos++;
-        if (!TryReadNumber(input, ref pos, out cy) || pos >= input.Length || (input[pos] != 'm' && input[pos] != 'M'))
+        if (!input.TryReadNumber(ref pos, out cy) || pos >= input.Length || (input[pos] != 'm' && input[pos] != 'M'))
         {
             return false;
         }
@@ -82,17 +79,5 @@ internal sealed class MouseInputProvider : IInputProvider
         pos++;
         input = input[pos..];
         return true;
-    }
-
-    private static bool TryReadNumber(ReadOnlySpan<char> input, ref int pos, out int value)
-    {
-        value = 0;
-        int start = pos;
-        while (pos < input.Length && char.IsAsciiDigit(input[pos]))
-        {
-            value = value * 10 + (input[pos] - '0');
-            pos++;
-        }
-        return pos > start;
     }
 }
