@@ -28,6 +28,11 @@ public sealed class Surface : ISurface
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(x);
+        ArgumentOutOfRangeException.ThrowIfNegative(y);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(x, Width);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(y, Height);
+        
         _glyphs[x, y] = c;
         if (style.Alpha != byte.MaxValue)
         {

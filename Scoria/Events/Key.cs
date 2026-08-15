@@ -157,7 +157,7 @@ public static class KeyExtensions
     /// <summary>Strips modifier flags, returning only the base key.</summary>
     /// <param name="key">The key to strip modifiers from.</param>
     /// <returns>The key with all modifier flags removed.</returns>
-    public static Key Base(this Key key) => key & BaseMask;
+    public static Key Base(this Key key) => key.HasFlag(Key.Unicode) ? Key.Unicode : key & BaseMask;
 
     extension (Key)
     {

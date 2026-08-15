@@ -92,10 +92,6 @@ internal sealed class LinuxConsoleDriver : IPlatformDriver
         write(_fd, buffer, (IntPtr)buffer.Length);
     }
 
-    public void Flush()
-    {
-    }
-
     public void Restore()
     {
         if (_originalTermios == null)

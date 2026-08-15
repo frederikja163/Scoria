@@ -154,10 +154,29 @@ public class SubSurfaceTests
     }
 
     [Test]
-    public void Constructor_OffsetXEqualToWidth_ThrowsArgumentOutOfRangeException()
+    public void Constructor_CanTouchParentEdge()
     {
         Surface parent = new Surface(10, 10);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 5, 0, 5, 5));
+        SubSurface sub = new SubSurface(parent, 5, 0, 5, 5);
+
+        Assert.That(sub.OffsetX, Is.EqualTo(5));
+        Assert.That(sub.OffsetY, Is.EqualTo(0));
+        Assert.That(sub.Width, Is.EqualTo(5));
+        Assert.That(sub.Height, Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Constructor_ZeroWidth_ThrowsArgumentOutOfRangeException()
+    {
+        Surface parent = new Surface(10, 10);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, 0, 0, 5));
+    }
+
+    [Test]
+    public void Constructor_ZeroHeight_ThrowsArgumentOutOfRangeException()
+    {
+        Surface parent = new Surface(10, 10);
+        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, 0, 5, 0));
     }
 
     [Test]

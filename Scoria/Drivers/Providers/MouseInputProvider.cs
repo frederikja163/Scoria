@@ -42,11 +42,11 @@ internal sealed class MouseInputProvider : IInputProvider
         }
         if ((Button)cb is Button.Left or Button.Right or Button.Middle)
         {
-            return new MouseButtonEventArgs((Button)cb, _mouseX, _mouseY, down);
+            return new MouseButtonEventArgs((Button)cb, cx, cy, down);
         }
         if (cb is 64 or 65)
         {
-            return new MouseScrollEventArgs(_mouseX, _mouseY, cb == 65);
+            return new MouseScrollEventArgs(cx, cy, cb == 65);
         }
 
         return null;

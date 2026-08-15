@@ -30,7 +30,7 @@ public enum StyleAttributes : byte
 /// <summary>
 /// Defines the visual style for terminal output, including foreground and background colors and text attributes.
 /// </summary>
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
 public struct Style() : IEquatable<Style>
 {
     public static Style Default => new Style(255, 255, 255, 0, 0, 0, 255, Scoria.StyleAttributes.None);

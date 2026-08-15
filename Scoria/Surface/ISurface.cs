@@ -103,7 +103,7 @@ public static class SurfaceExtensions
     public static void Borders(this ISurface surface, string title = "", bool thin = false, Style? style = null)
     {
         char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
-        style ??= Theme.CurrentTheme.BorderStyle;
+        style ??= Theme.CurrentTheme.Border;
 
         for (int x = 0; x < surface.Width; x++)
         {

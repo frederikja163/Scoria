@@ -10,6 +10,10 @@ internal sealed class KeyInputProvider : IInputProvider
         ("\x1b[B", Key.Down),
         ("\x1b[C", Key.Right),
         ("\x1b[D", Key.Left),
+        ("\x1bOA", Key.Up),
+        ("\x1bOB", Key.Down),
+        ("\x1bOC", Key.Right),
+        ("\x1bOD", Key.Left),
         ("\x1b[2~", Key.Insert),
         ("\x1b[3~", Key.Delete),
         ("\x1b[5~", Key.PageUp),
@@ -35,7 +39,8 @@ internal sealed class KeyInputProvider : IInputProvider
 
     public void Init(IConsoleDriver driver)
     {
-        driver.Write("\x1b[>4;2m");
+        driver.Enable(PrivateMode.ApplicationCursorKeys, true);
+        driver.Enable(PrivateMode.ApplicationKeypad, true);
     }
 
     public void Restore(IConsoleDriver driver)

@@ -126,16 +126,18 @@ internal class ConsoleDriver : IConsoleDriver
     private void Display(Surface surface)
     {
         // TODO: Make system to only write surface difference.
+        int width = Math.Min(surface.Width, _width);
+        int height = Math.Min(surface.Height, _height);
         SelectGraphicsRendition(GraphicsRendition.Reset);
         _currentStyle = new Style();
-        for (int y = 0; y < _height; y++)
+        for (int y = 0; y < height; y++)
         {
             if (y != 0)
             {
                 NextLine();
             }
 
-            for (int x = 0; x < _width; x++)
+            for (int x = 0; x < width; x++)
             {
                 ApplyStyle(surface.GetStyle(x, y));
                 Write(surface.GetChar(x, y));

@@ -11,11 +11,11 @@ public sealed class SubSurface : ISurface
     internal SubSurface(ISurface parent, int offsetX, int offsetY, int width, int height)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(offsetX);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(offsetX, width);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(width, parent.Width - offsetX);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetY);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(offsetX, width);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(height, parent.Height - offsetY);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(offsetX + width, parent.Width);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(offsetY + height, parent.Height);
         _parent = parent;
         OffsetX = offsetX;
         OffsetY = offsetY;

@@ -87,6 +87,10 @@ public class KeyInputProviderTests
 
     [TestCase("\x1b[A", Key.Up)]
     [TestCase("\x1b[B", Key.Down)]
+    [TestCase("\x1bOA", Key.Up)]
+    [TestCase("\x1bOB", Key.Down)]
+    [TestCase("\x1bOC", Key.Right)]
+    [TestCase("\x1bOD", Key.Left)]
     [TestCase("\x1bOP", Key.F1)]
     [TestCase("\x1b[15~", Key.F5)]
     public void HandleInput_EscapeSequence_ReturnsKeyEventArgs(string input, Key expected)

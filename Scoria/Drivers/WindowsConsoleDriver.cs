@@ -96,10 +96,6 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
     public void Write(byte[] buffer)
     {
         _stdout.Write(buffer, 0, buffer.Length);
-    }
-
-    public void Flush()
-    {
         _stdout.Flush();
     }
 
