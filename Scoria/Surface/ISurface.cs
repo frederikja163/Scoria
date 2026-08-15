@@ -66,27 +66,9 @@ public static class SurfaceExtensions
     /// <param name="style">The style to apply to every cell in the region.</param>
     public static void Fill(this ISurface surface, char c, Style style)
     {
-        surface.Fill(c, 0, 0, surface.Width, surface.Height, style);
-    }
-
-    /// <summary>Fills a rectangular region of the surface with the specified character and style.</summary>
-    /// <param name="surface">The surface to fill.</param>
-    /// <param name="c">The character to fill with.</param>
-    /// <param name="startX">The X coordinate of the start of the region.</param>
-    /// <param name="startY">The Y coordinate of the start of the region.</param>
-    /// <param name="endX">The X coordinate of the end of the region (exclusive).</param>
-    /// <param name="endY">The Y coordinate of the end of the region (exclusive).</param>
-    /// <param name="style">The style to apply to every cell in the region.</param>
-    public static void Fill(this ISurface surface, char c, int startX, int startY, int endX, int endY, Style style)
-    {
-        int x0 = Math.Max(startX, 0);
-        int y0 = Math.Max(startY, 0);
-        int x1 = Math.Min(endX, surface.Width);
-        int y1 = Math.Min(endY, surface.Height);
-
-        for (int x = x0; x < x1; x++)
+        for (int x = 0; x < surface.Width; x++)
         {
-            for (int y = y0; y < y1; y++)
+            for (int y = 0; y < surface.Height; y++)
             {
                 surface.Write(c, x, y, style);
             }

@@ -27,67 +27,12 @@ public class SurfaceExtensionsTests
     {
         Surface surface = new Surface(5, 5);
         surface.Fill('A', new Style());
-        surface.Fill('B', 1, 1, 3, 3, new Style());
+        surface.SubSurface(1, 1, 3, 3).Fill('B', new Style());
 
         Assert.That(surface.GetChar(0, 0), Is.EqualTo('A'));
         Assert.That(surface.GetChar(4, 4), Is.EqualTo('A'));
         Assert.That(surface.GetChar(1, 1), Is.EqualTo('B'));
         Assert.That(surface.GetChar(2, 2), Is.EqualTo('B'));
-    }
-
-    [Test]
-    public void Fill_Region_FillsCorrectCells()
-    {
-        Surface surface = new Surface(5, 5);
-        Style style = new Style(100, 0, 0, StyleAttributes.None);
-        surface.Fill('#', 1, 1, 4, 3, style);
-
-        for (int x = 1; x < 4; x++)
-        {
-            for (int y = 1; y < 3; y++)
-            {
-                Assert.That(surface.GetChar(x, y), Is.EqualTo('#'));
-            }
-        }
-
-        Assert.That(surface.GetChar(0, 0), Is.EqualTo('\0'));
-        Assert.That(surface.GetChar(4, 4), Is.EqualTo('\0'));
-    }
-
-    [Test]
-    public void Fill_Region_ClampsToSurfaceBounds()
-    {
-        Surface surface = new Surface(3, 3);
-        surface.Fill('X', -1, -1, 100, 100, new Style());
-
-        for (int x = 0; x < 3; x++)
-        {
-            for (int y = 0; y < 3; y++)
-            {
-                Assert.That(surface.GetChar(x, y), Is.EqualTo('X'));
-            }
-        }
-    }
-
-    [Test]
-    public void Fill_Region_NegativeCoordinates_ClampedToZero()
-    {
-        Surface surface = new Surface(5, 5);
-        surface.Fill('X', -2, -3, 2, 2, new Style());
-
-        Assert.That(surface.GetChar(0, 0), Is.EqualTo('X'));
-        Assert.That(surface.GetChar(1, 1), Is.EqualTo('X'));
-        Assert.That(surface.GetChar(2, 0), Is.EqualTo('\0'));
-    }
-
-    [Test]
-    public void Fill_Region_EmptyRegion_NoChanges()
-    {
-        Surface surface = new Surface(5, 5);
-        surface.Fill('A', new Style());
-        surface.Fill('B', 2, 2, 2, 2, new Style());
-
-        Assert.That(surface.GetChar(2, 2), Is.EqualTo('A'));
     }
 
     [Test]

@@ -188,11 +188,11 @@ public class SubSurfaceTests
     }
 
     [Test]
-    public void Fill_Region_Extension_FillsSubSurfaceRegion()
+    public void Fill_Extension_FillsNestedSubSurfaceRegion()
     {
         Surface parent = new Surface(10, 10);
         SubSurface sub = new SubSurface(parent, 2, 2, 5, 5);
-        sub.Fill('R', 1, 1, 3, 3, new Style());
+        sub.SubSurface(1, 1, 3, 3).Fill('R', new Style());
 
         Assert.That(sub.GetChar(0, 0), Is.EqualTo('\0'));
         Assert.That(sub.GetChar(1, 1), Is.EqualTo('R'));
