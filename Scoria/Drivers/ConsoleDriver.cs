@@ -309,6 +309,7 @@ internal enum Mode
         SetLegacyKeyboardEmulation = 1060, // Set legacy keyboard emulation (X11R6)
         SetSunPCKeyboardEmulation = 1061, // Set Sun/PC keyboard emulation of VT220 keyboard
         BracketedPaste = 2004,          // Set bracketed paste mode. Wraps pasted text in CSI 200~ / CSI 201~ so the app can distinguish paste from keystrokes.
+        WindowResize = 2048,            // Report text-area size changes. Sends CSI 48;height;width;height_px;width_px t immediately and on resize.
     }
 
     internal enum GraphicsRendition

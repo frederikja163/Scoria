@@ -11,7 +11,8 @@ ConsoleDriver driver = new ConsoleDriver(
     new FocusInputProvider(),
     new KeyInputProvider(),
     new MouseInputProvider(),
-    new PasteInputProvider()
+    new PasteInputProvider(),
+    new ResizeInputProvider()
     // new LogInputProvider(),
 );
 
