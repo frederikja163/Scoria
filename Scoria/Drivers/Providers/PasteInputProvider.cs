@@ -6,24 +6,36 @@ internal sealed class PasteInputProvider : IInputProvider
 {
     private const string PasteStart = "\x1b[200~";
     private const string PasteStop = "\x1b[201~";
-    
+
     public bool Enable => true;
     public int Order => 0;
 
-    public void Init()
+    public void Init(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.BracketedPaste, true);
+        driver.Enable(PrivateMode.BracketedPaste, true);
     }
 
-    public void Restore()
+    public void Restore(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.BracketedPaste, false);
+        driver.Enable(PrivateMode.BracketedPaste, false);
     }
 
-    public EventArgs? HandleInput(string input)
+    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
-        return input.StartsWith(PasteStart) && input.EndsWith(PasteStop)
-            ? new PasteEventArgs(input[PasteStart.Length..^PasteStop.Length])
-            : null;
+        if (!input.StartsWith(PasteStart))
+        {
+            return null;
+        }
+
+        int stopIndex = input[PasteStart.Length..].IndexOf(PasteStop);
+        if (stopIndex < 0)
+        {
+            return null;
+        }
+        stopIndex += PasteStart.Length;
+
+        string text = input[PasteStart.Length..stopIndex].ToString();
+        input = input[(stopIndex + PasteStop.Length)..];
+        return new PasteEventArgs(text);
     }
 }

@@ -14,9 +14,9 @@ public class HideCursorSettingProviderTests
     }
 
     [Test]
-    public void Order_ReturnsZero()
+    public void Order_ReturnsMinValue()
     {
         var provider = new HideCursorSettingProvider();
-        Assert.That(provider.Order, Is.EqualTo(0));
+        Assert.That(provider.Order, Is.EqualTo(int.MinValue));
     }
 }

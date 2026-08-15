@@ -4,68 +4,83 @@ namespace Scoria.Drivers.Providers;
 
 internal sealed class KeyInputProvider : IInputProvider
 {
+    private static readonly (string Sequence, Key Key)[] EscapeSequences =
+    {
+        ("\x1b[A", Key.Up),
+        ("\x1b[B", Key.Down),
+        ("\x1b[C", Key.Right),
+        ("\x1b[D", Key.Left),
+        ("\x1b[2~", Key.Insert),
+        ("\x1b[3~", Key.Delete),
+        ("\x1b[5~", Key.PageUp),
+        ("\x1b[6~", Key.PageDown),
+        ("\x1b[H", Key.Home),
+        ("\x1b[F", Key.End),
+        ("\x1bOP", Key.F1),
+        ("\x1bOQ", Key.F2),
+        ("\x1bOR", Key.F3),
+        ("\x1bOS", Key.F4),
+        ("\x1b[15~", Key.F5),
+        ("\x1b[16~", Key.F6),
+        ("\x1b[17~", Key.F7),
+        ("\x1b[18~", Key.F8),
+        ("\x1b[19~", Key.F9),
+        ("\x1b[20~", Key.F10),
+        ("\x1b[21~", Key.F11),
+        ("\x1b[22~", Key.F12),
+    };
+
     public int Order => 0;
     public bool Enable => true;
-    public void Init()
+
+    public void Init(IConsoleDriver driver)
     {
-        ConsoleDriver.Write("\x1b[>4;2m");
+        driver.Write("\x1b[>4;2m");
     }
 
-    public void Restore()
+    public void Restore(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.ApplicationCursorKeys, false);
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.ApplicationKeypad, false);
+        driver.Enable(PrivateMode.ApplicationCursorKeys, false);
+        driver.Enable(PrivateMode.ApplicationKeypad, false);
     }
 
-    public EventArgs? HandleInput(string input)
+    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
-        (Key? key, char? ch) = HandleEscapeSequence(input);
-
         if (input.Length == 1)
         {
-            key = Key.FromChar(input[0], out ch);
+            Key key = Key.FromChar(input[0], out char? ch);
+            if (key == Key.Unicode && ToCtrlKey(input[0]) is { } ctrlKey)
+            {
+                key = ctrlKey;
+                ch = null;
+            }
+            input = input[1..];
+            return new KeyEventArgs(key, ch);
         }
 
-        if (key is not null)
+        if (input.StartsWith("\x1b") && input.Length == 2)
         {
-            return new KeyEventArgs(key.Value, ch);
+            Key key = Key.FromChar(input[1], out char? ch) | Key.Alt;
+            input = input[2..];
+            return new KeyEventArgs(key, ch);
+        }
+
+        foreach ((string sequence, Key key) in EscapeSequences)
+        {
+            if (input.StartsWith(sequence))
+            {
+                input = input[sequence.Length..];
+                return new KeyEventArgs(key, null);
+            }
         }
 
         return null;
     }
 
-    private static (Key? key, char? ch) HandleEscapeSequence(string input)
+    private static Key? ToCtrlKey(char c) => c switch
     {
-        if (input.StartsWith("\x1b"))
-        {
-            return input switch
-            {
-                "\x1b[A" => (Key.Up, null),
-                "\x1b[B" => (Key.Down, null),
-                "\x1b[C" => (Key.Right, null),
-                "\x1b[D" => (Key.Left, null),
-                "\x1b[2\x7E" => (Key.Insert, null),
-                "\x1b[3\x7E" => (Key.Delete, null),
-                "\x1b[5\x7E" => (Key.PageUp, null),
-                "\x1b[6\x7E" => (Key.PageDown, null),
-                "\x1b[H" => (Key.Home, null),
-                "\x1b[F" => (Key.End, null),
-                "\x1bOP" => (Key.F1, null),
-                "\x1bOQ" => (Key.F2, null),
-                "\x1bOR" => (Key.F3, null),
-                "\x1bOS" => (Key.F4, null),
-                "\x1b[15\x7E" => (Key.F5, null),
-                "\x1b[16\x7E" => (Key.F6, null),
-                "\x1b[17\x7E" => (Key.F7, null),
-                "\x1b[18\x7E" => (Key.F8, null),
-                "\x1b[19\x7E" => (Key.F9, null),
-                "\x1b[20\x7E" => (Key.F10, null),
-                "\x1b[21\x7E" => (Key.F11, null),
-                "\x1b[22\x7E" => (Key.F12, null),
-                _ => (null, null),
-            };
-        }
-
-        return (null, null);
-    }
+        '\x00' => Key.Space | Key.Ctrl,
+        >= '\x01' and <= '\x1A' => (Key)(c - '\x01' + (int)Key.A) | Key.Ctrl,
+        _ => null,
+    };
 }

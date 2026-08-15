@@ -7,26 +7,31 @@ internal sealed class FocusInputProvider : IInputProvider
     private const string FocusLost = $"\x1b[O";
     private const string FocusGained = $"\x1b[I";
 
-    public bool Enable => true;
     public int Order => 0;
-
-    public void Init()
+    public bool Enable => true;
+    public void Init(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.FocusEvents, true);
+        driver.Enable(PrivateMode.FocusEvents, true);
     }
 
-    public void Restore()
+    public void Restore(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.FocusEvents, false);
+        driver.Enable(PrivateMode.FocusEvents, false);
     }
 
-    public EventArgs? HandleInput(string input)
+    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
-        return input switch
+        if (input.StartsWith(FocusLost))
         {
-            FocusLost => new FocusChangedEventArgs(false),
-            FocusGained => new FocusChangedEventArgs(true),
-            _ => null,
-        };
+            input = input[FocusLost.Length..];
+            return new FocusChangedEventArgs(false);
+        }
+
+        if (input.StartsWith(FocusGained))
+        {
+            input = input[FocusGained.Length..];
+            return new FocusChangedEventArgs(true);
+        }
+        return null;
     }
 }

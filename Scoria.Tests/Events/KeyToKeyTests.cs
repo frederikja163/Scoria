@@ -16,9 +16,9 @@ public class KeyToKeyTests
         Assert.That(ch, Is.EqualTo(c));
     }
 
-    [TestCase('A', Key.A)]
-    [TestCase('Z', Key.Z)]
-    [TestCase('M', Key.M)]
+    [TestCase('A', Key.A | Key.Shift)]
+    [TestCase('Z', Key.Z | Key.Shift)]
+    [TestCase('M', Key.M | Key.Shift)]
     public void UppercaseLetter_MapsCorrectly(char c, Key expected)
     {
         Key key = Key.FromChar(c, out var ch);
@@ -96,10 +96,11 @@ public class KeyToKeyTests
     }
 
     [Test]
-    public void CaseInsensitiveLetter_ProducesSameKey()
+    public void CaseVariants_ShareSameBaseKey()
     {
         Key lower = Key.FromChar('a', out _);
         Key upper = Key.FromChar('A', out _);
-        Assert.That(lower, Is.EqualTo(upper));
+        Assert.That(upper, Is.EqualTo(lower | Key.Shift));
+        Assert.That(upper.Base(), Is.EqualTo(lower));
     }
 }

@@ -1,16 +1,22 @@
 ﻿namespace Scoria.Drivers.Providers;
 
-internal sealed class HideCursorSettingProvider : ISettingProvider
+internal sealed class HideCursorSettingProvider : IInputProvider
 {
-    public int Order => 0;
+    public int Order => int.MinValue;
     public bool Enable => true;
-    public void Init()
+
+    public void Init(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.ShowCursor, false);
+        driver.Enable(PrivateMode.ShowCursor, false);
     }
 
-    public void Restore()
+    public void Restore(IConsoleDriver driver)
     {
-        ConsoleDriver.Enable(ConsoleDriver.PrivateMode.ShowCursor, true);
+        driver.Enable(PrivateMode.ShowCursor, true);
+    }
+
+    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    {
+        return null;
     }
 }

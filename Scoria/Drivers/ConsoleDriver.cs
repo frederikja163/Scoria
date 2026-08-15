@@ -5,34 +5,29 @@ using Scoria.Drivers.Providers;
 
 namespace Scoria.Drivers;
 
-internal static class ConsoleDriver
+internal interface IConsoleDriver
 {
-    private static readonly ISettingProvider[] SettingProviders;
-    private static readonly IInputProvider[] InputProviders;
-    private static readonly IPlatformDriver PlatformDriver;
-    internal static event Action<EventArgs>? OnEvent;
-    
-    
-    private static readonly StringBuilder Buffer = new StringBuilder();
-    private static Style _currentStyle = new Style();
-    private static int _width;
-    private static int _height;
+    void Write(char value);
+    void Write(string value);
+    void WriteRaw(int value);
+    void Enable(PrivateMode privateMode, bool enable);
+}
 
-    static ConsoleDriver()
+internal class ConsoleDriver : IConsoleDriver
+{
+    private readonly IInputProvider[] InputProviders;
+    private readonly IPlatformDriver PlatformDriver;
+    internal event Action<EventArgs>? OnEvent;
+
+
+    private readonly StringBuilder Buffer = new StringBuilder();
+    private Style _currentStyle = new Style();
+    private int _width;
+    private int _height;
+
+    internal ConsoleDriver(params IInputProvider[] providers)
     {
-        static object? TryCreate(Type type)
-        {
-            try
-            {
-                return Activator.CreateInstance(type);
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        static IPlatformDriver CreatePlatform()
+        IPlatformDriver CreatePlatform()
         {
             if (OperatingSystem.IsLinux())
             {
@@ -43,101 +38,88 @@ internal static class ConsoleDriver
             {
                 return new WindowsConsoleDriver();
             }
-        
+
             throw new PlatformNotSupportedException();
         }
 
-        SettingProviders = Assembly.GetExecutingAssembly()
-            .GetTypes()
-            .Where(t => t.IsAssignableTo(typeof(ISettingProvider)))
-            .Select(TryCreate)
-            .Where(i => i is not null)
-            .OfType<ISettingProvider>()
-            .OrderBy(i => i.Order)
-            .ToArray();
-        
+        InputProviders = providers;
         PlatformDriver = CreatePlatform();
-        InputProviders = SettingProviders.OfType<IInputProvider>().ToArray();
-        
+
         Init();
-        
+
         _width = Console.WindowWidth;
         _height = Console.WindowHeight;
 
-        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
-        {
-            Restore();
-        };
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => { Restore(); };
 
-        Console.CancelKeyPress += (_, e) =>
-        {
-            e.Cancel = true;
-        };
+        Console.CancelKeyPress += (_, e) => { e.Cancel = true; };
     }
 
-    internal static void Init()
+    internal void Init()
     {
         PlatformDriver.Init();
-        
-        foreach (ISettingProvider provider in SettingProviders)
+
+        foreach (IInputProvider provider in InputProviders)
         {
             if (provider.Enable)
             {
-                provider.Init();
+                provider.Init(this);
             }
         }
+
         Flush();
     }
 
-    internal static void Restore()
+    internal void Restore()
     {
-        foreach (ISettingProvider provider in SettingProviders)
+        foreach (IInputProvider provider in InputProviders)
         {
             if (provider.Enable)
             {
-                provider.Restore();
+                provider.Restore(this);
             }
         }
+
         Flush();
         PlatformDriver.Restore();
     }
 
-    internal static void PollInput() => PollInput(Timeout.InfiniteTimeSpan);
+    internal void PollInput() => PollInput(Timeout.InfiniteTimeSpan);
 
-    internal static void PollInput(TimeSpan timeout)
+    internal void PollInput(TimeSpan timeout)
     {
         byte[] bytes = new byte[256];
         int length = PlatformDriver.PollInput(bytes, timeout);
         if (length > 0)
         {
             string input = Encoding.UTF8.GetString(bytes.AsSpan(0, length));
-            HandleInput(input);
+            ReadOnlySpan<char> inp = input;
+            while (inp.Length != 0 && HandleInput(ref inp)) ;
         }
     }
 
-    private static void HandleInput(string input)
+    private bool HandleInput(ref ReadOnlySpan<char> inp)
     {
         foreach (IInputProvider inputProvider in InputProviders)
         {
-            if (inputProvider.HandleInput(input) is {} args)
+            if (inputProvider.HandleInput(ref inp) is { } args)
             {
                 OnEvent?.Invoke(args);
-                return;
+                return true;
             }
         }
 
-        input = string.Join(' ', input.Select(c => char.IsLetterOrDigit(c) ? c.ToString() : ((int)c).ToString("X2")));
-        Console.WriteLine($"Unrecognized input: '{input}'");
+        return false;
     }
 
-    internal static void Frame(Surface surface)
+    internal void Frame(Surface surface)
     {
         Clear();
         Display(surface);
         Flush();
     }
-    
-    private static void Display(Surface surface)
+
+    private void Display(Surface surface)
     {
         SelectGraphicsRendition(GraphicsRendition.Reset);
         _currentStyle = new Style();
@@ -147,6 +129,7 @@ internal static class ConsoleDriver
             {
                 NextLine();
             }
+
             for (int x = 0; x < _width; x++)
             {
                 ApplyStyle(surface.GetStyle(x, y));
@@ -155,27 +138,27 @@ internal static class ConsoleDriver
         }
     }
 
-    private static void Flush()
+    private void Flush()
     {
         byte[] data = Encoding.UTF8.GetBytes(Buffer.ToString());
         PlatformDriver.Write(data);
         Buffer.Clear();
     }
-    
-    private static void Clear()
+
+    private void Clear()
     {
         ControlSequenceIntroducer('J', 2);
         ControlSequenceIntroducer('H');
         ControlSequenceIntroducer('J', 3);
     }
 
-    private static void NextLine()
+    private void NextLine()
     {
         Escape();
         Write('E');
     }
 
-    private static void ApplyStyle(Style style)
+    private void ApplyStyle(Style style)
     {
         if (_currentStyle == style)
             return;
@@ -183,30 +166,33 @@ internal static class ConsoleDriver
         ApplyAttribute(StyleAttributes.Bold, GraphicsRendition.BoldOn, GraphicsRendition.BoldOff);
         ApplyAttribute(StyleAttributes.Italic, GraphicsRendition.ItalicOn, GraphicsRendition.ItalicOff);
         ApplyAttribute(StyleAttributes.Underline, GraphicsRendition.UnderlineOn, GraphicsRendition.UnderlineOff);
-        ApplyAttribute(StyleAttributes.Strikethrough, GraphicsRendition.StrikethroughOn, GraphicsRendition.StrikethroughOff);
+        ApplyAttribute(StyleAttributes.Strikethrough, GraphicsRendition.StrikethroughOn,
+            GraphicsRendition.StrikethroughOff);
         ApplyAttribute(StyleAttributes.Blink, GraphicsRendition.BlinkOn, GraphicsRendition.BlinkOff);
-        ApplyAttribute(StyleAttributes.DoubleUnderline, GraphicsRendition.DoubleUnderlineOn, GraphicsRendition.DoubleUnderlineOff);
+        ApplyAttribute(StyleAttributes.DoubleUnderline, GraphicsRendition.DoubleUnderlineOn,
+            GraphicsRendition.DoubleUnderlineOff);
         ApplyAttribute(StyleAttributes.Overline, GraphicsRendition.OverlinedOn, GraphicsRendition.OverlinedOff);
 
-        if (style.ForegroundRed   != _currentStyle.ForegroundRed   ||
+        if (style.ForegroundRed != _currentStyle.ForegroundRed ||
             style.ForegroundGreen != _currentStyle.ForegroundGreen ||
-            style.ForegroundBlue  != _currentStyle.ForegroundBlue)
+            style.ForegroundBlue != _currentStyle.ForegroundBlue)
         {
             SelectGraphicsRendition(GraphicsRendition.Foreground, 2,
                 style.ForegroundRed, style.ForegroundGreen, style.ForegroundBlue);
-            _currentStyle.ForegroundRed   = style.ForegroundRed;
+            _currentStyle.ForegroundRed = style.ForegroundRed;
             _currentStyle.ForegroundGreen = style.ForegroundGreen;
-            _currentStyle.ForegroundBlue  = style.ForegroundBlue;
+            _currentStyle.ForegroundBlue = style.ForegroundBlue;
         }
-        if (style.BackgroundRed   != _currentStyle.BackgroundRed   ||
+
+        if (style.BackgroundRed != _currentStyle.BackgroundRed ||
             style.BackgroundGreen != _currentStyle.BackgroundGreen ||
-            style.BackgroundBlue  != _currentStyle.BackgroundBlue)
+            style.BackgroundBlue != _currentStyle.BackgroundBlue)
         {
             SelectGraphicsRendition(GraphicsRendition.Background, 2,
                 style.BackgroundRed, style.BackgroundGreen, style.BackgroundBlue);
-            _currentStyle.BackgroundRed   = style.BackgroundRed;
+            _currentStyle.BackgroundRed = style.BackgroundRed;
             _currentStyle.BackgroundGreen = style.BackgroundGreen;
-            _currentStyle.BackgroundBlue  = style.BackgroundBlue;
+            _currentStyle.BackgroundBlue = style.BackgroundBlue;
         }
 
         void ApplyAttribute(StyleAttributes styleAttribute, GraphicsRendition on, GraphicsRendition off)
@@ -219,12 +205,16 @@ internal static class ConsoleDriver
         }
     }
 
-    internal static void Write(char value)    => Buffer.Append(value);
-    internal static void Write(string value)  => Buffer.Append(value);
-    internal static void WriteRaw(int value)  => Buffer.Append((char)value);
-    private static void Escape()             => WriteRaw(0x1b);
+    void IConsoleDriver.Write(char value) => Write(value);
+    internal void Write(char value) => Buffer.Append(value);
+    void IConsoleDriver.Write(string value) => Write(value);
+    internal void Write(string value) => Buffer.Append(value);
+    void IConsoleDriver.WriteRaw(int value) => WriteRaw(value);
 
-    private static void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
+    internal void WriteRaw(int value) => Buffer.Append((char)value);
+    private void Escape() => WriteRaw(0x1b);
+
+    private void ControlSequenceIntroducer(char command, params IEnumerable<int> args)
     {
         Escape();
         Write('[');
@@ -232,12 +222,13 @@ internal static class ConsoleDriver
         Write(command);
     }
 
-    private static void SelectGraphicsRendition(GraphicsRendition rendition, params IEnumerable<int> codes)
+    private void SelectGraphicsRendition(GraphicsRendition rendition, params IEnumerable<int> codes)
     {
         ControlSequenceIntroducer('m', codes.Prepend((char)rendition));
     }
 
-    internal static void Enable(PrivateMode feature, bool enable)
+    void IConsoleDriver.Enable(PrivateMode feature, bool enable) => Enable(feature, enable);
+    internal void Enable(PrivateMode feature, bool enable)
     {
         Escape();
         Write('[');
@@ -246,15 +237,16 @@ internal static class ConsoleDriver
         Write(enable ? 'h' : 'l');
     }
 
-    internal static void Enable(Mode feature, bool enable)
+    internal void Enable(Mode feature, bool enable)
     {
         Escape();
         Write('[');
         Write(((int)feature).ToString());
         Write(enable ? 'h' : 'l');
     }
+}
 
-    internal enum Mode
+internal enum Mode
     {
         KeyboardAction = 2,     // Keyboard Action Mode (AM)
         Insert = 4,             // Insert Mode (IRM)
@@ -312,7 +304,7 @@ internal static class ConsoleDriver
         BracketedPaste = 2004,          // Set bracketed paste mode. Wraps pasted text in CSI 200~ / CSI 201~ so the app can distinguish paste from keystrokes.
     }
 
-    private enum GraphicsRendition
+    internal enum GraphicsRendition
     {
         Reset = 0,
         BoldOn = 1,
@@ -336,5 +328,3 @@ internal static class ConsoleDriver
         Foreground = 38,
         Background = 48
     }
-
-}
