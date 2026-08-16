@@ -26,18 +26,35 @@ driver.OnEvent += eventArgs =>
 };
 
 Surface surface = new Surface(driver.Width, driver.Height);
-for (int i = 0; i < surface.Width; i++)
+surface.Fill(' ', new Style(255, 255, 255, 30, 30, 40));
+
+PanelElement panel = new PanelElement
 {
-    for (int j = 0; j < surface.Height; j++)
-    {
-        surface.Write(' ', i, j, new Style(0, 0, 0, (byte)Random.Shared.Next(255), (byte)Random.Shared.Next(255), (byte)Random.Shared.Next(255)));
-    }
-}
-surface.Borders("Test", true);
-surface.ExpandBorders();
+    X = 4,
+    Y = 2,
+    Width = 36,
+    Height = 8,
+    Title = "Panel",
+};
+panel.AddChild(new TextElement
+{
+    X = 6,
+    Y = 4,
+    Text = "Hello, Scoria!",
+    Style = new Style { ForegroundRed = 120, ForegroundGreen = 255, ForegroundBlue = 150 },
+});
+panel.AddChild(new TextElement
+{
+    X = 6,
+    Y = 5,
+    Text = "Rendered from elements",
+    Style = new Style(StyleAttributes.Bold) { ForegroundRed = 255, ForegroundGreen = 200, ForegroundBlue = 100 },
+});
 
 while (true)
 {
+    panel.Render(surface);
+    surface.ExpandBorders();
     driver.Frame(surface);
     driver.PollInput();
 }

@@ -65,7 +65,7 @@ public struct Style() : IEquatable<Style>
     /// <param name="alpha">Alpha (opacity) of the background color (0-255).</param>
     /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
     public Style(byte foregroundRed, byte foregroundGreen, byte foregroundBlue,
-        byte backgroundRed = 0, byte backgroundGreen = 0, byte backgroundBlue = 0, byte alpha = 255,
+        byte backgroundRed, byte backgroundGreen, byte backgroundBlue, byte alpha = 255,
         StyleAttributes styleAttributes = StyleAttributes.None) : this()
     {
         ForegroundRed = foregroundRed;
