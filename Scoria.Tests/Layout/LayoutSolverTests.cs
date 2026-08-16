@@ -4,7 +4,7 @@ using Scoria.Layout;
 
 namespace Scoria.Tests.Layout;
 
-using EdgeMap = Dictionary<Reference, HashSet<Reference>>;
+using EdgeMap = Dictionary<LayoutProperty, HashSet<LayoutProperty>>;
 
 [TestFixture]
 public class LayoutSolverTests
@@ -12,7 +12,7 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_NoNodes_ReturnsEmptyOrder()
     {
-        List<Reference> order = RunTopologicalSort(BuildGraph([]));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([]));
 
         Assert.That(order, Is.Empty);
     }
@@ -20,10 +20,10 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_SingleDependency_TargetSolvedBeforeSource()
     {
-        Reference source = Ref();
-        Reference target = Ref();
+        LayoutProperty source = Ref();
+        LayoutProperty target = Ref();
 
-        List<Reference> order = RunTopologicalSort(BuildGraph([source, target], (source, target)));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([source, target], (source, target)));
 
         Assert.That(order, Is.EquivalentTo(new[] { source, target }));
         Assert.That(order.IndexOf(target), Is.LessThan(order.IndexOf(source)));
@@ -32,11 +32,11 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_LinearChain_DependenciesBeforeDependents()
     {
-        Reference a = Ref();
-        Reference b = Ref();
-        Reference c = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
+        LayoutProperty c = Ref();
 
-        List<Reference> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c)));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c)));
 
         Assert.That(order, Is.EquivalentTo(new[] { a, b, c }));
         Assert.That(order.IndexOf(c), Is.LessThan(order.IndexOf(b)));
@@ -46,12 +46,12 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_Diamond_RespectsAllDependencies()
     {
-        Reference a = Ref();
-        Reference b = Ref();
-        Reference c = Ref();
-        Reference d = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
+        LayoutProperty c = Ref();
+        LayoutProperty d = Ref();
 
-        List<Reference> order = RunTopologicalSort(BuildGraph([a, b, c, d], (a, b), (a, c), (b, d), (c, d)));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([a, b, c, d], (a, b), (a, c), (b, d), (c, d)));
 
         Assert.That(order, Is.EquivalentTo(new[] { a, b, c, d }));
         Assert.That(order.IndexOf(d), Is.LessThan(order.IndexOf(b)));
@@ -63,11 +63,11 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_NodeWithoutDependencies_IsIncluded()
     {
-        Reference a = Ref();
-        Reference b = Ref();
-        Reference c = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
+        LayoutProperty c = Ref();
 
-        List<Reference> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b)));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b)));
 
         Assert.That(order, Is.EquivalentTo(new[] { a, b, c }));
     }
@@ -75,11 +75,11 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_EveryNodeAppearsExactlyOnce()
     {
-        Reference a = Ref();
-        Reference b = Ref();
-        Reference c = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
+        LayoutProperty c = Ref();
 
-        List<Reference> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c)));
+        List<LayoutProperty> order = RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c)));
 
         Assert.That(order, Has.Exactly(1).EqualTo(a));
         Assert.That(order, Has.Exactly(1).EqualTo(b));
@@ -89,7 +89,7 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_SelfLoop_Throws()
     {
-        Reference a = Ref();
+        LayoutProperty a = Ref();
 
         Assert.That(
             () => RunTopologicalSort(BuildGraph([a], (a, a))),
@@ -99,8 +99,8 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_MutualCycle_Throws()
     {
-        Reference a = Ref();
-        Reference b = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
 
         Assert.That(
             () => RunTopologicalSort(BuildGraph([a, b], (a, b), (b, a))),
@@ -110,9 +110,9 @@ public class LayoutSolverTests
     [Test]
     public void TopologicalSort_ThreeNodeCycle_Throws()
     {
-        Reference a = Ref();
-        Reference b = Ref();
-        Reference c = Ref();
+        LayoutProperty a = Ref();
+        LayoutProperty b = Ref();
+        LayoutProperty c = Ref();
 
         Assert.That(
             () => RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c), (c, a))),
@@ -135,7 +135,7 @@ public class LayoutSolverTests
         Element b = NewElement();
         parent.AddChild(a);
         parent.AddChild(b);
-        ((TestPos)b.X).References.Add(new Reference(Property.X, a));
+        ((TestPos)b.X).References.Add(new LayoutProperty(LayoutPropertyType.X, a));
 
         Assert.DoesNotThrow(() => LayoutSolver.Solve(parent));
     }
@@ -148,36 +148,36 @@ public class LayoutSolverTests
         Element b = NewElement();
         parent.AddChild(a);
         parent.AddChild(b);
-        ((TestPos)a.X).References.Add(new Reference(Property.X, b));
-        ((TestPos)b.X).References.Add(new Reference(Property.X, a));
+        ((TestPos)a.X).References.Add(new LayoutProperty(LayoutPropertyType.X, b));
+        ((TestPos)b.X).References.Add(new LayoutProperty(LayoutPropertyType.X, a));
 
         Assert.That(
             () => LayoutSolver.Solve(parent),
             Throws.Exception.With.Message.EqualTo("Layout cycle detected!"));
     }
 
-    private static Reference Ref()
+    private static LayoutProperty Ref()
     {
-        return new Reference(Property.X, new PanelElement { Title = "ref" });
+        return new LayoutProperty(LayoutPropertyType.X, new PanelElement { Title = "ref" });
     }
 
-    private static (Queue<Reference> Queue, EdgeMap Forward, EdgeMap Backward) BuildGraph(
-        Reference[] nodes,
-        params (Reference Source, Reference Target)[] edges)
+    private static (Queue<LayoutProperty> Queue, EdgeMap DependencyEdges, EdgeMap DependentEdges) BuildGraph(
+        LayoutProperty[] nodes,
+        params (LayoutProperty Source, LayoutProperty Target)[] edges)
     {
-        Queue<Reference> queue = new();
-        EdgeMap forward = [];
-        EdgeMap backward = [];
-        HashSet<Reference> sources = [];
+        Queue<LayoutProperty> queue = new();
+        EdgeMap dependencyEdges = [];
+        EdgeMap dependentEdges = [];
+        HashSet<LayoutProperty> sources = [];
 
-        foreach ((Reference source, Reference target) in edges)
+        foreach ((LayoutProperty source, LayoutProperty target) in edges)
         {
-            AddEdge(forward, source, target);
-            AddEdge(backward, target, source);
+            AddEdge(dependencyEdges, source, target);
+            AddEdge(dependentEdges, target, source);
             sources.Add(source);
         }
 
-        foreach (Reference node in nodes)
+        foreach (LayoutProperty node in nodes)
         {
             if (!sources.Contains(node))
             {
@@ -185,12 +185,12 @@ public class LayoutSolverTests
             }
         }
 
-        return (queue, forward, backward);
+        return (queue, dependencyEdges, dependentEdges);
     }
 
-    private static void AddEdge(EdgeMap edges, Reference source, Reference target)
+    private static void AddEdge(EdgeMap edges, LayoutProperty source, LayoutProperty target)
     {
-        if (!edges.TryGetValue(source, out HashSet<Reference>? targets))
+        if (!edges.TryGetValue(source, out HashSet<LayoutProperty>? targets))
         {
             targets = [];
             edges.Add(source, targets);
@@ -198,23 +198,23 @@ public class LayoutSolverTests
         targets.Add(target);
     }
 
-    private static List<Reference> RunTopologicalSort(
-        (Queue<Reference> Queue, EdgeMap Forward, EdgeMap Backward) graph)
+    private static List<LayoutProperty> RunTopologicalSort(
+        (Queue<LayoutProperty> Queue, EdgeMap DependencyEdges, EdgeMap DependentEdges) graph)
     {
-        return LayoutSolver.TopologicalSort(graph.Queue, graph.Forward, graph.Backward);
+        return LayoutSolver.TopologicalSort(graph.Queue, graph.DependencyEdges, graph.DependentEdges);
     }
 
     private sealed class TestPos : Pos
     {
-        public List<Reference> References { get; } = [];
-        internal override List<Reference> GetReferences(Property property, Element self) => References;
-        internal override int Solve(LayoutSolver solver, List<int> dependencies) => 0;
+        public List<LayoutProperty> References { get; } = [];
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => References;
+        internal override int Resolve(LayoutProperty property, List<int> dependencies) => 0;
     }
 
     private sealed class TestSize : Size
     {
-        internal override List<Reference> GetReferences(Property property, Element self) => [];
-        internal override int Solve(LayoutSolver solver, List<int> dependencies) => 0;
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => [];
+        internal override int Resolve(LayoutProperty property, List<int> dependencies) => 0;
     }
 
     private static Element NewElement()

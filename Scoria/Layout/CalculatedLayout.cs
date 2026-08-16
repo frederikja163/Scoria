@@ -7,20 +7,20 @@ public sealed class CalculatedLayout
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    internal void SetProperty(Property property, int value)
+    internal void SetProperty(LayoutPropertyType layoutPropertyType, int value)
     {
-        switch (property)
+        switch (layoutPropertyType)
         {
-            case Property.X:
+            case LayoutPropertyType.X:
                 X = value;
                 break;
-            case Property.Y:
+            case LayoutPropertyType.Y:
                 Y = value;
                 break;
-            case Property.Width:
+            case LayoutPropertyType.Width:
                 Width = value;
                 break;
-            case Property.Height:
+            case LayoutPropertyType.Height:
                 Height = value;
                 break;
             default:

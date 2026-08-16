@@ -51,6 +51,16 @@ public abstract class Element
             child.Render(surface);
         }
     }
+
+    protected internal virtual List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType layoutPropertyType)
+    {
+        return [];
+    }
+
+    protected internal virtual int ResolveAutoLayout(LayoutPropertyType propertyType, List<int> dependencies)
+    {
+        return 0;
+    }
 }
 
 public sealed class PanelElement : Element
@@ -77,5 +87,26 @@ public sealed class TextElement : Element
             surface.Write(Text[i], CalculatedLayout.X + i, CalculatedLayout.Y, Style);
         }
         base.Render(surface);
+    }
+
+    protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType layoutPropertyType)
+    {
+        if (layoutPropertyType == LayoutPropertyType.Height)
+            return [new(LayoutPropertyType.Width, this)];
+        return [];
+    }
+
+    protected internal override int ResolveAutoLayout(LayoutPropertyType propertyType, List<int> dependencies)
+    {
+        if (propertyType == LayoutPropertyType.Width)
+            return Text.Length;
+        if (propertyType == LayoutPropertyType.Height)
+        {
+            int width = dependencies[0];
+            // Integer division with rounding up.
+            return (Text.Length + width - 1) / width;
+        }
+
+        return 0;
     }
 }

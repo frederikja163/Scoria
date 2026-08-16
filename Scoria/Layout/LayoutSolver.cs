@@ -1,24 +1,24 @@
 ﻿namespace Scoria.Layout;
 
-using EdgeCollection = HashSet<Reference>;
-using EdgeMap = Dictionary<Reference, HashSet<Reference>>;
-using DependencyMap = Dictionary<Reference, List<Reference>>;
+using EdgeCollection = HashSet<LayoutProperty>;
+using EdgeMap = Dictionary<LayoutProperty, HashSet<LayoutProperty>>;
+using DependencyMap = Dictionary<LayoutProperty, List<LayoutProperty>>;
 
 internal sealed class LayoutSolver
 {
-    private readonly List<Reference> _topologicalOrder;
+    private readonly List<LayoutProperty> _topologicalOrder;
     private readonly DependencyMap _dependencies;
-    private readonly Dictionary<Reference, int> _solvedValues = [];
+    private readonly Dictionary<LayoutProperty, int> _solvedValues = [];
 
-    internal LayoutSolver(List<Reference> topologicalOrder, DependencyMap dependencies)
+    internal LayoutSolver(List<LayoutProperty> topologicalOrder, DependencyMap dependencies)
     {
         _topologicalOrder = topologicalOrder;
         _dependencies = dependencies;
     }
 
-    internal int GetValue(Reference reference)
+    internal int GetValue(LayoutProperty layoutProperty)
     {
-        if (_solvedValues.TryGetValue(reference, out int value))
+        if (_solvedValues.TryGetValue(layoutProperty, out int value))
         {
             return value;
         }
@@ -28,51 +28,52 @@ internal sealed class LayoutSolver
 
     internal void Solve()
     {
-        foreach (Reference reference in _topologicalOrder)
+        foreach (LayoutProperty property in _topologicalOrder)
         {
-            IReferenceContainer property = reference.GetProperty();
-            _solvedValues[reference] = property.Solve(this, _dependencies[reference].Select(GetValue).ToList());
+            ILayoutResolver resolver = property.GetProperty();
+            _solvedValues[property] = resolver.Resolve(property, _dependencies[property].Select(GetValue).ToList());
         }
     }
 
     internal void PopulateProperties()
     {
-        foreach ((Reference reference, int value) in _solvedValues)
+        foreach ((LayoutProperty reference, int value) in _solvedValues)
         {
-            reference.Element.CalculatedLayout.SetProperty(reference.Property, value);
+            reference.Element.CalculatedLayout.SetProperty(reference.Type, value);
         }
     }
 
     internal static void Solve(Element parentElement, bool includeSelf = false)
     {
-        EdgeMap forwardEdges = [];
-        EdgeMap backwardEdges = [];
-        Queue<Reference> emptyQueue = [];
-        Dictionary<Reference, List<Reference>> dependencies = [];
+        EdgeMap dependencyEdges = [];
+        EdgeMap dependentEdges = [];
+        Queue<LayoutProperty> emptyQueue = [];
+        Dictionary<LayoutProperty, List<LayoutProperty>> dependencies = [];
         foreach (Element element in GetChildrenRecursive(parentElement, includeSelf))
         {
-            AddEdges(element.X.GetReferences(Property.X, element), new Reference(Property.X, element));
-            AddEdges(element.Y.GetReferences(Property.Y, element), new Reference(Property.Y, element));
-            AddEdges(element.Width.GetReferences(Property.Width, element), new Reference(Property.Width, element));
-            AddEdges(element.Height.GetReferences(Property.Height, element), new Reference(Property.Height, element));
+            AddEdges(new LayoutProperty(LayoutPropertyType.X, element));
+            AddEdges(new LayoutProperty(LayoutPropertyType.Y, element));
+            AddEdges(new LayoutProperty(LayoutPropertyType.Width, element));
+            AddEdges(new LayoutProperty(LayoutPropertyType.Height, element));
         }
 
-        List<Reference> topologicalOrder = TopologicalSort(emptyQueue, forwardEdges, backwardEdges);
+        List<LayoutProperty> topologicalOrder = TopologicalSort(emptyQueue, dependencyEdges, dependentEdges);
         LayoutSolver layoutSolver = new LayoutSolver(topologicalOrder, dependencies);
         layoutSolver.Solve();
         layoutSolver.PopulateProperties();
         
-        void AddEdges(List<Reference> targets, Reference source)
+        void AddEdges(LayoutProperty source)
         {
+            List<LayoutProperty> targets = source.GetProperty().GetDependencies(source);
             dependencies.Add(source, targets);
             if (!targets.Any())
             {
                 emptyQueue.Enqueue(source);
             }
-            foreach (Reference target in targets)
+            foreach (LayoutProperty target in targets)
             {
-                AddEdge(forwardEdges, source, target);
-                AddEdge(backwardEdges, target, source);
+                AddEdge(dependencyEdges, source, target);
+                AddEdge(dependentEdges, target, source);
             }
         }
     }
@@ -92,33 +93,33 @@ internal sealed class LayoutSolver
         }
     }
 
-    internal static List<Reference> TopologicalSort(Queue<Reference> emptyQueue, EdgeMap forwardEdges, EdgeMap backwardEdges)
+    internal static List<LayoutProperty> TopologicalSort(Queue<LayoutProperty> emptyQueue, EdgeMap dependencyEdges, EdgeMap dependentEdges)
     {
-        List<Reference> topologicalOrder = [];
-        while (emptyQueue.TryDequeue(out Reference? node))
+        List<LayoutProperty> topologicalOrder = [];
+        while (emptyQueue.TryDequeue(out LayoutProperty? node))
         {
             // Add to empty queue.
             topologicalOrder.Add(node);
             
             // Remove any edges going to this edge.
-            if (!backwardEdges.TryGetValue(node, out EdgeCollection? sources))
+            if (!dependentEdges.TryGetValue(node, out EdgeCollection? sources))
                 continue;
-            foreach (Reference source in sources)
+            foreach (LayoutProperty source in sources)
             {
-                EdgeCollection targets = forwardEdges[source];
+                EdgeCollection targets = dependencyEdges[source];
                 targets.Remove(node);
 
                 if (targets.Count == 0)
                 {
-                    forwardEdges.Remove(source);
+                    dependencyEdges.Remove(source);
                     emptyQueue.Enqueue(source);
                 }
             }
 
-            backwardEdges.Remove(node);
+            dependentEdges.Remove(node);
         }
 
-        if (forwardEdges.Any())
+        if (dependencyEdges.Any())
         {
             throw new Exception("Layout cycle detected!");
         }
@@ -126,7 +127,7 @@ internal sealed class LayoutSolver
         return topologicalOrder;
     }
 
-    private static void AddEdge(EdgeMap edges, Reference source, Reference target)
+    private static void AddEdge(EdgeMap edges, LayoutProperty source, LayoutProperty target)
     {
         if (!edges.TryGetValue(source, out EdgeCollection? targets))
         {
