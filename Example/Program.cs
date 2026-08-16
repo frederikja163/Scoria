@@ -3,6 +3,7 @@ using Scoria;
 using Scoria.Drivers;
 using Scoria.Drivers.Providers;
 using Scoria.Events;
+using Scoria.Layout;
 
 Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
@@ -30,26 +31,29 @@ surface.Fill(' ', new Style(255, 255, 255, 30, 30, 40));
 
 PanelElement panel = new PanelElement
 {
-    X = 4,
-    Y = 2,
-    Width = 36,
-    Height = 8,
+    X = Pos.Abs(0),
+    Y = Pos.Abs(0),
+    Width = Size.Abs(100),
+    Height = Size.Abs(20),
     Title = "Panel",
 };
 panel.AddChild(new TextElement
 {
-    X = 6,
-    Y = 4,
+    X = Pos.Center(),
+    Y = Pos.Relative(0.1f, panel),
+    Height = Size.Abs(1),
     Text = "Hello, Scoria!",
     Style = new Style { ForegroundRed = 120, ForegroundGreen = 255, ForegroundBlue = 150 },
 });
 panel.AddChild(new TextElement
 {
-    X = 6,
-    Y = 5,
+    X = Pos.Center(),
+    Y = Pos.Relative(0.2f, panel),
+    Height = Size.Abs(1),
     Text = "Rendered from elements",
     Style = new Style(StyleAttributes.Bold) { ForegroundRed = 255, ForegroundGreen = 200, ForegroundBlue = 100 },
 });
+LayoutSolver.Solve(panel, true);
 
 while (true)
 {
