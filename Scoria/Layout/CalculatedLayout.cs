@@ -1,10 +1,17 @@
 ﻿namespace Scoria.Layout;
 
+/// <summary>
+/// Holds the final resolved position and size of an element after layout calculation.
+/// </summary>
 public sealed class CalculatedLayout
 {
+    /// <summary>The resolved horizontal position.</summary>
     public int X { get; private set; }
+    /// <summary>The resolved vertical position.</summary>
     public int Y { get; private set; }
+    /// <summary>The resolved width.</summary>
     public int Width { get; private set; }
+    /// <summary>The resolved height.</summary>
     public int Height { get; private set; }
 
     internal void SetProperty(LayoutPropertyType layoutPropertyType, int value)

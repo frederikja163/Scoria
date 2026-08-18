@@ -2,6 +2,9 @@
 
 namespace Scoria.Layout;
 
+/// <summary>
+/// Describes how the width or height of an element is resolved during layout.
+/// </summary>
 public abstract class Size : ILayoutResolver
 {
     List<LayoutProperty> ILayoutResolver.GetDependencies(LayoutProperty property) => GetDependencies(property);
@@ -18,6 +21,9 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => "Auto";
     }
 
+    /// <summary>
+    /// Creates a size that is automatically resolved based on the element's layout dependencies.
+    /// </summary>
     public static Size Auto() => new AutoSize();
     
     private sealed class AbsoluteSize(int value) : Size
@@ -29,6 +35,10 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => $"Absolute({value})";
     }
 
+    /// <summary>
+    /// Creates a size with a fixed value in characters.
+    /// </summary>
+    /// <param name="value">The fixed size in characters.</param>
     public static Size Abs(int value) => new AbsoluteSize(value);
 
     private class RelativeSize(float factor, Element? element) : Size
@@ -50,6 +60,13 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
     }
 
+    /// <summary>
+    /// Creates a size that is a fraction of the reference element's corresponding size.
+    /// </summary>
+    /// <param name="factor">The fraction of the reference size to use (e.g. 0.5 for half).</param>
+    /// <param name="element">
+    /// The element whose size to scale relative to. If <see langword="null"/>, the parent element is used.
+    /// </param>
     public static Size Relative(float factor, Element? element = null) => new RelativeSize(factor, element);
 
     private sealed class FillSize(Element? element) : RelativeSize(1, element)
@@ -57,6 +74,13 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => $"Fill({ElementString})";
     }
 
+    /// <summary>
+    /// Creates a size that fills the entire reference element along this axis.
+    /// Equivalent to <c>Relative(1, element)</c>.
+    /// </summary>
+    /// <param name="element">
+    /// The element to fill. If <see langword="null"/>, the parent element is used.
+    /// </param>
     public static Size Fill(Element? element = null) => new FillSize(element);
 
     private sealed class AspectSize(float aspectRatio) : Size
@@ -73,6 +97,10 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => $"Aspect({aspectRatio.ToString(CultureInfo.InvariantCulture)})";
     }
 
+    /// <summary>
+    /// Creates a size derived from the element's size on the other axis, scaled by the given ratio.
+    /// </summary>
+    /// <param name="aspectRatio">The ratio to multiply the other axis size by.</param>
     public static Size Aspect(float aspectRatio) => new AspectSize(aspectRatio);
     
     private sealed class FitChildrenSize : Size
@@ -88,5 +116,8 @@ public abstract class Size : ILayoutResolver
         public override string ToString() => "FitChildren";
     }
 
+    /// <summary>
+    /// Creates a size equal to the sum of the corresponding sizes of all direct children.
+    /// </summary>
     public static Size FitChildren() => new FitChildrenSize();
 }
