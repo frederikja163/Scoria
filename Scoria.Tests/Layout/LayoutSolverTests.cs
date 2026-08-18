@@ -91,9 +91,7 @@ public class LayoutSolverTests
     {
         LayoutProperty a = Ref();
 
-        Assert.That(
-            () => RunTopologicalSort(BuildGraph([a], (a, a))),
-            Throws.Exception.With.Message.EqualTo("Layout cycle detected!"));
+        Assert.Throws<LayoutCycleException>(() => RunTopologicalSort(BuildGraph([a], (a, a))));
     }
 
     [Test]
@@ -102,9 +100,7 @@ public class LayoutSolverTests
         LayoutProperty a = Ref();
         LayoutProperty b = Ref();
 
-        Assert.That(
-            () => RunTopologicalSort(BuildGraph([a, b], (a, b), (b, a))),
-            Throws.Exception.With.Message.EqualTo("Layout cycle detected!"));
+        Assert.Throws<LayoutCycleException>(() => RunTopologicalSort(BuildGraph([a, b], (a, b), (b, a))));
     }
 
     [Test]
@@ -114,9 +110,27 @@ public class LayoutSolverTests
         LayoutProperty b = Ref();
         LayoutProperty c = Ref();
 
-        Assert.That(
-            () => RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c), (c, a))),
-            Throws.Exception.With.Message.EqualTo("Layout cycle detected!"));
+        Assert.Throws<LayoutCycleException>(() => RunTopologicalSort(BuildGraph([a, b, c], (a, b), (b, c), (c, a))));
+    }
+
+    [Test]
+    public void TopologicalSort_ReferenceOutsideGraph_ThrowsWithTrace()
+    {
+        LayoutProperty a = Ref();
+        LayoutProperty outside = Ref();
+
+        Assert.Throws<LayoutException>(() => RunTopologicalSort(BuildGraph([a], (a, outside))));
+    }
+
+    [Test]
+    public void TopologicalSort_DeepCycle_CapsTheTrace()
+    {
+        LayoutProperty[] nodes = Enumerable.Range(0, 51).Select(_ => Ref()).ToArray();
+        (LayoutProperty Source, LayoutProperty Target)[] edges = nodes
+            .Select((node, index) => (node, nodes[(index + 1) % nodes.Length]))
+            .ToArray();
+
+        Assert.Throws<LayoutCycleException>(() => RunTopologicalSort(BuildGraph(nodes, edges)));
     }
 
     [Test]
@@ -151,9 +165,7 @@ public class LayoutSolverTests
         ((TestPos)a.X).References.Add(new LayoutProperty(LayoutPropertyType.X, b));
         ((TestPos)b.X).References.Add(new LayoutProperty(LayoutPropertyType.X, a));
 
-        Assert.That(
-            () => LayoutSolver.Solve(parent),
-            Throws.Exception.With.Message.EqualTo("Layout cycle detected!"));
+        Assert.Throws<LayoutCycleException>(() => LayoutSolver.Solve(parent));
     }
 
     private static LayoutProperty Ref()

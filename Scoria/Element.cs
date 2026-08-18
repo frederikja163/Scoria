@@ -10,10 +10,10 @@ public abstract class Element
     // TODO: Hierarchical theme system
     // TODO Layout system
 
-    public Pos X { get; set; } = Pos.Center();
-    public Pos Y { get; set; } = Pos.Center();
-    public Size Width { get; set; } = Size.Fill();
-    public Size Height { get; set; } = Size.Fill();
+    public Pos X { get; set; } = Pos.Auto();
+    public Pos Y { get; set; } = Pos.Auto();
+    public Size Width { get; set; } = Size.Auto();
+    public Size Height { get; set; } = Size.Auto();
     protected internal CalculatedLayout CalculatedLayout { get; } = new();
     public Element? Parent { get; set; } = null;
 

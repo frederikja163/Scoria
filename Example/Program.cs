@@ -33,23 +33,21 @@ PanelElement panel = new PanelElement
 {
     X = Pos.Abs(0),
     Y = Pos.Abs(0),
-    Width = Size.Abs(100),
-    Height = Size.Abs(20),
+    Width = Size.Aspect(2),
+    Height = Size.Aspect(2),
     Title = "Panel",
 };
 panel.AddChild(new TextElement
 {
     X = Pos.Center(),
     Y = Pos.Relative(0.1f, panel),
-    Height = Size.Abs(1),
     Text = "Hello, Scoria!",
     Style = new Style { ForegroundRed = 120, ForegroundGreen = 255, ForegroundBlue = 150 },
 });
 panel.AddChild(new TextElement
 {
-    X = Pos.Center(),
+    X = Pos.End(),
     Y = Pos.Relative(0.2f, panel),
-    Height = Size.Abs(1),
     Text = "Rendered from elements",
     Style = new Style(StyleAttributes.Bold) { ForegroundRed = 255, ForegroundGreen = 200, ForegroundBlue = 100 },
 });

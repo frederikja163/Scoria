@@ -25,9 +25,14 @@ public sealed record LayoutProperty(LayoutPropertyType Type, Element Element)
         LayoutPropertyType.Height => Element.Height,
         _ => throw new ArgumentOutOfRangeException()
     };
+
+    public override string ToString()
+    {
+        return $"{Element}.{Type}";
+    }
 }
 
-internal static class LayoutPropertyTypeExtensions
+public static class LayoutPropertyTypeExtensions
 {
     extension(LayoutPropertyType layoutPropertyType)
     {

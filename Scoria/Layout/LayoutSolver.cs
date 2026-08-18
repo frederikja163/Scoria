@@ -23,7 +23,7 @@ internal sealed class LayoutSolver
             return value;
         }
 
-        throw new Exception("Layouts cannot reference properties from another viewport.");
+        throw new LayoutException("Layouts cannot reference properties from another viewport.");
     }
 
     internal void Solve()
@@ -121,10 +121,29 @@ internal sealed class LayoutSolver
 
         if (dependencyEdges.Any())
         {
-            throw new Exception("Layout cycle detected!");
+            throw new LayoutCycleException(GetCycle(dependencyEdges));
         }
 
         return topologicalOrder;
+    }
+
+    private static IEnumerable<LayoutProperty> GetCycle(EdgeMap dependencyEdges)
+    {
+        LayoutProperty first = dependencyEdges.Keys.First();
+        LayoutProperty? node = first;
+        EdgeCollection? dependencies = dependencyEdges.GetValueOrDefault(node);
+        do
+        {
+            yield return node;
+            node = dependencies?.FirstOrDefault();
+        } while (node is not null && node != first && dependencyEdges.TryGetValue(node, out dependencies));
+        
+        yield return first;
+
+        if (dependencies is null)
+        {
+            throw new LayoutException($"{node} References a property outside the graph");
+        }
     }
 
     private static void AddEdge(EdgeMap edges, LayoutProperty source, LayoutProperty target)

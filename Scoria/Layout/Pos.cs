@@ -1,4 +1,4 @@
-﻿using System.Net.Cache;
+﻿using System.Globalization;
 
 namespace Scoria.Layout;
 
@@ -15,6 +15,8 @@ public abstract class Pos : ILayoutResolver
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
+
+        public override string ToString() => "Auto";
     }
 
     public static Pos Auto() => new AutoPos();
@@ -34,7 +36,7 @@ public abstract class Pos : ILayoutResolver
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
             Element reference = element ?? property.Element.Parent ??
-                throw new Exception("Relative position must either specify an element or have a parent element.");
+                throw new LayoutException("Relative position must either specify an element or have a parent element.");
             return
             [
                 property with { Type = property.Type.SameAxisSize() },
@@ -56,17 +58,17 @@ public abstract class Pos : ILayoutResolver
         protected string ElementString => element?.ToString() ?? "Parent";
     }
 
-    private class RelativePos(float percentage, Element? element) : RelativeBase(element)
+    private class RelativePos(float factor, Element? element) : RelativeBase(element)
     {
         protected override int Solve(int size, int refPos, int refSize)
         {
-            return (int)((refSize - size) * percentage) + refPos;
+            return (int)((refSize - size) * factor) + refPos;
         }
 
-        public override string ToString() => $"Relative({percentage}, {ElementString})";
+        public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
     }
     
-    public static Pos Relative(float percentage, Element? element = null) => new RelativePos(percentage, element);
+    public static Pos Relative(float factor, Element? element = null) => new RelativePos(factor, element);
     
     private sealed class CenterPos(Element? element) : RelativePos(0.5f, element)
     {

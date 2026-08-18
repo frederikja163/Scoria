@@ -111,7 +111,7 @@ public class SizeTests
 
         Assert.That(
             () => Size.Relative(0.5f).GetDependencies(new LayoutProperty(LayoutPropertyType.Width, self)),
-            Throws.Exception.With.Message.EqualTo("Relative size must either specify an element or have a parent element."));
+            Throws.TypeOf<LayoutException>());
     }
 
     [Test]
@@ -212,8 +212,55 @@ public class SizeTests
         Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(0));
     }
 
+    [Test]
+    public void ToString_Auto_ReturnsAuto()
+    {
+        Assert.That(Size.Auto().ToString(), Is.EqualTo("Auto"));
+    }
+
+    [Test]
+    public void ToString_Abs_ReturnsAbsoluteValue()
+    {
+        Assert.That(Size.Abs(10).ToString(), Is.EqualTo("Absolute(10)"));
+    }
+
+    [Test]
+    public void ToString_Relative_UsesParentWhenNoElement()
+    {
+        Assert.That(Size.Relative(0.5f).ToString(), Is.EqualTo("Relative(0.5, Parent)"));
+    }
+
+    [Test]
+    public void ToString_Relative_UsesElementName()
+    {
+        Assert.That(Size.Relative(0.5f, new NamedElement("target")).ToString(), Is.EqualTo("Relative(0.5, target)"));
+    }
+
+    [Test]
+    public void ToString_Fill_UsesParentWhenNoElement()
+    {
+        Assert.That(Size.Fill().ToString(), Is.EqualTo("Fill(Parent)"));
+    }
+
+    [Test]
+    public void ToString_Aspect_ReturnsRatio()
+    {
+        Assert.That(Size.Aspect(2f).ToString(), Is.EqualTo("Aspect(2)"));
+    }
+
+    [Test]
+    public void ToString_FitChildren_ReturnsFitChildren()
+    {
+        Assert.That(Size.FitChildren().ToString(), Is.EqualTo("FitChildren"));
+    }
+
     private static Element NewElement()
     {
         return new PanelElement { Title = "element" };
+    }
+
+    private sealed class NamedElement(string name) : Element
+    {
+        public override string ToString() => name;
     }
 }

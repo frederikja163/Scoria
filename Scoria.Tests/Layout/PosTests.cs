@@ -113,7 +113,7 @@ public class PosTests
 
         Assert.That(
             () => Pos.Relative(0.5f).GetDependencies(new LayoutProperty(LayoutPropertyType.X, self)),
-            Throws.Exception.With.Message.EqualTo("Relative position must either specify an element or have a parent element."));
+            Throws.TypeOf<LayoutException>());
     }
 
     [Test]
@@ -405,6 +405,60 @@ public class PosTests
         Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, endChild)), Is.EqualTo(10));
     }
 
+    [Test]
+    public void ToString_Auto_ReturnsAuto()
+    {
+        Assert.That(Pos.Auto().ToString(), Is.EqualTo("Auto"));
+    }
+
+    [Test]
+    public void ToString_Abs_ReturnsAbsoluteValue()
+    {
+        Assert.That(Pos.Abs(10).ToString(), Is.EqualTo("Absolute(10)"));
+    }
+
+    [Test]
+    public void ToString_Relative_UsesParentWhenNoElement()
+    {
+        Assert.That(Pos.Relative(0.5f).ToString(), Is.EqualTo("Relative(0.5, Parent)"));
+    }
+
+    [Test]
+    public void ToString_Relative_UsesElementName()
+    {
+        Assert.That(Pos.Relative(0.5f, new NamedElement("target")).ToString(), Is.EqualTo("Relative(0.5, target)"));
+    }
+
+    [Test]
+    public void ToString_Center_UsesElementName()
+    {
+        Assert.That(Pos.Center(new NamedElement("target")).ToString(), Is.EqualTo("Center(target)"));
+    }
+
+    [Test]
+    public void ToString_Begin_UsesParentWhenNoElement()
+    {
+        Assert.That(Pos.Begin().ToString(), Is.EqualTo("Begin(Parent)"));
+    }
+
+    [Test]
+    public void ToString_End_UsesElementName()
+    {
+        Assert.That(Pos.End(new NamedElement("target")).ToString(), Is.EqualTo("End(target)"));
+    }
+
+    [Test]
+    public void ToString_Before_IncludesValueAndElement()
+    {
+        Assert.That(Pos.Before(3, new NamedElement("target")).ToString(), Is.EqualTo("Before(3, target)"));
+    }
+
+    [Test]
+    public void ToString_After_IncludesValueAndElement()
+    {
+        Assert.That(Pos.After(4, new NamedElement("target")).ToString(), Is.EqualTo("After(4, target)"));
+    }
+
     private static LayoutSolver BuildSolver(Element root)
     {
         EdgeMap dependencyEdges = [];
@@ -469,5 +523,10 @@ public class PosTests
             Width = Size.Abs(width),
             Height = Size.Abs(height),
         };
+    }
+
+    private sealed class NamedElement(string name) : Element
+    {
+        public override string ToString() => name;
     }
 }

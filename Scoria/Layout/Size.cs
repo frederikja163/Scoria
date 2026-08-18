@@ -1,4 +1,6 @@
-﻿namespace Scoria.Layout;
+﻿using System.Globalization;
+
+namespace Scoria.Layout;
 
 public abstract class Size : ILayoutResolver
 {
@@ -12,6 +14,8 @@ public abstract class Size : ILayoutResolver
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
+
+        public override string ToString() => "Auto";
     }
 
     public static Size Auto() => new AutoSize();
@@ -22,30 +26,38 @@ public abstract class Size : ILayoutResolver
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => value;
 
-        public override string ToString() => $"Absolute({value}";
+        public override string ToString() => $"Absolute({value})";
     }
 
     public static Size Abs(int value) => new AbsoluteSize(value);
 
-    private sealed class RelativeSize(float percentage, Element? element) : Size
+    private class RelativeSize(float factor, Element? element) : Size
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) =>
         [
             property with { Element = element ?? property.Element.Parent ??
-                throw new Exception("Relative size must either specify an element or have a parent element.") }
+                throw new LayoutException("Relative size must either specify an element or have a parent element.") }
         ];
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies)
         {
             int refSize = dependencies[0];
-            return (int)(percentage * refSize);
+            return (int)(factor * refSize);
         }
 
-        public override string ToString() => $"Relative({percentage}, {element?.ToString() ?? "Parent"}";
+        protected string ElementString => element?.ToString() ?? "Parent";
+
+        public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
     }
 
-    public static Size Relative(float percentage, Element? element = null) => new RelativeSize(percentage, element);
-    public static Size Fill(Element? element = null) => new RelativeSize(1, element);
+    public static Size Relative(float factor, Element? element = null) => new RelativeSize(factor, element);
+
+    private sealed class FillSize(Element? element) : RelativeSize(1, element)
+    {
+        public override string ToString() => $"Fill({ElementString})";
+    }
+
+    public static Size Fill(Element? element = null) => new FillSize(element);
 
     private sealed class AspectSize(float aspectRatio) : Size
     {
@@ -58,7 +70,7 @@ public abstract class Size : ILayoutResolver
             return (int)(aspectRatio * selfOtherSize);
         }
 
-        public override string ToString() => $"Aspect({aspectRatio})";
+        public override string ToString() => $"Aspect({aspectRatio.ToString(CultureInfo.InvariantCulture)})";
     }
 
     public static Size Aspect(float aspectRatio) => new AspectSize(aspectRatio);
@@ -73,7 +85,7 @@ public abstract class Size : ILayoutResolver
             return dependencies.Sum();
         }
 
-        public override string ToString() => $"FitChildren";
+        public override string ToString() => "FitChildren";
     }
 
     public static Size FitChildren() => new FitChildrenSize();
