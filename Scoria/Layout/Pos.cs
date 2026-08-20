@@ -104,69 +104,81 @@ public abstract class Pos : ILayoutResolver
     /// </param>
     public static Pos Center(Element? element = null) => new CenterPos(element);
     
-    private sealed class BeginPos(Element? element) : RelativePos(0, element)
+    private sealed class BeginPos(int offset, Element? element) : RelativePos(0, element)
     {
+        protected override int Solve(int size, int refPos, int refSize)
+        {
+            return base.Solve(size, refPos, refSize) + offset;
+        }
+
         public override string ToString() => $"Begin({ElementString})";
     }
     
     /// <summary>
-    /// Creates a position aligned to the start (top or left edge) of the reference element.
-    /// Equivalent to <c>Relative(0, element)</c>.
+    /// Creates a position aligned to the start (top or left edge) of the reference element, with an optional offset.
+    /// Equivalent to <c>Relative(0, element)</c> plus the offset.
     /// </summary>
+    /// <param name="offset">The offset in characters from the start edge.</param>
     /// <param name="element">
     /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos Begin(Element? element = null) => new BeginPos(element);
+    public static Pos Begin(int offset = 0, Element? element = null) => new BeginPos(offset, element);
     
-    private sealed class EndPos(Element? element) : RelativePos(1, element)
+    private sealed class EndPos(int offset, Element? element) : RelativePos(1, element)
     {
+        protected override int Solve(int size, int refPos, int refSize)
+        {
+            return base.Solve(size, refPos, refSize) - offset;
+        }
+
         public override string ToString() => $"End({ElementString})";
     }
 
     /// <summary>
-    /// Creates a position aligned to the end (bottom or right edge) of the reference element.
-    /// Equivalent to <c>Relative(1, element)</c>.
+    /// Creates a position aligned to the end (bottom or right edge) of the reference element, with an optional offset.
+    /// Equivalent to <c>Relative(1, element)</c> minus the offset.
     /// </summary>
+    /// <param name="offset">The offset in characters from the end edge.</param>
     /// <param name="element">
     /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos End(Element? element = null) => new EndPos(element);
+    public static Pos End(int offset = 0, Element? element = null) => new EndPos(offset, element);
 
-    private sealed class BeforePos(int value, Element? element) : RelativeBase(element)
+    private sealed class BeforePos(int offset, Element? element) : RelativeBase(element)
     {
         protected override int Solve(int size, int refPos, int refSize)
         {
-            return refPos - size - value;
+            return refPos - size - offset;
         }
 
-        public override string ToString() => $"Before({value}, {ElementString})";
+        public override string ToString() => $"Before({offset}, {ElementString})";
     }
 
     /// <summary>
     /// Creates a position placed before (to the left of or above) the reference element with an optional gap.
     /// </summary>
-    /// <param name="value">The gap in characters between the element's end edge and the reference's start edge.</param>
+    /// <param name="offset">The gap in characters between the element's end edge and the reference's start edge.</param>
     /// <param name="element">
     /// The element to position before. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos Before(int value = 0, Element? element = null) => new BeforePos(value, element);
+    public static Pos Before(int offset = 0, Element? element = null) => new BeforePos(offset, element);
 
-    private sealed class AfterPos(int value, Element? element) : RelativeBase(element)
+    private sealed class AfterPos(int offset, Element? element) : RelativeBase(element)
     {
         protected override int Solve(int size, int refPos, int refSize)
         {
-            return refPos + refSize + value;
+            return refPos + refSize + offset;
         }
 
-        public override string ToString() => $"After({value}, {ElementString})";
+        public override string ToString() => $"After({offset}, {ElementString})";
     }
 
     /// <summary>
     /// Creates a position placed after (to the right of or below) the reference element with an optional gap.
     /// </summary>
-    /// <param name="value">The gap in characters between the reference's end edge and this element's start edge.</param>
+    /// <param name="offset">The gap in characters between the reference's end edge and this element's start edge.</param>
     /// <param name="element">
     /// The element to position after. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos After(int value = 0, Element? element = null) => new AfterPos(value, element);
+    public static Pos After(int offset = 0, Element? element = null) => new AfterPos(offset, element);
 }

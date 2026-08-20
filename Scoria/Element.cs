@@ -101,11 +101,13 @@ public sealed class PanelElement : Element
 {
     /// <summary>The title displayed in the panel border.</summary>
     public string Title { get; set; } = string.Empty;
+
+    public bool ThinBorders = false;
     
     /// <inheritdoc/>
     public override void Render(ISurface surface)
     {
-        surface.SubSurface(CalculatedLayout.X, CalculatedLayout.Y, CalculatedLayout.Width, CalculatedLayout.Height).Borders(Title, thin: false);
+        surface.SubSurface(CalculatedLayout.X, CalculatedLayout.Y, CalculatedLayout.Width, CalculatedLayout.Height).Borders(Title, thin: ThinBorders);
         base.Render(surface);
     }
 }
@@ -133,6 +135,8 @@ public sealed class TextElement : Element
 
     protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType layoutPropertyType)
     {
+        if (layoutPropertyType == LayoutPropertyType.Width)
+            return [new LayoutProperty(LayoutPropertyType.Width, Parent)];
         if (layoutPropertyType == LayoutPropertyType.Height)
             return [new(LayoutPropertyType.Width, this)];
         return [];
@@ -141,7 +145,7 @@ public sealed class TextElement : Element
     protected internal override int ResolveAutoLayout(LayoutPropertyType propertyType, List<int> dependencies)
     {
         if (propertyType == LayoutPropertyType.Width)
-            return Text.Length;
+            return int.Min(dependencies[0], Text.Length);
         if (propertyType == LayoutPropertyType.Height)
         {
             int width = dependencies[0];

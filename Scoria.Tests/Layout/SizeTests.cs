@@ -173,7 +173,7 @@ public class SizeTests
     }
 
     [Test]
-    public void FitChildren_GetDependencies_ReferencesEachChild()
+    public void FitChildren_GetDependencies_ReferencesEachChildPositionAndSize()
     {
         Element parent = NewElement();
         Element a = NewElement();
@@ -185,7 +185,9 @@ public class SizeTests
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
+            new LayoutProperty(LayoutPropertyType.X, a),
             new LayoutProperty(LayoutPropertyType.Width, a),
+            new LayoutProperty(LayoutPropertyType.X, b),
             new LayoutProperty(LayoutPropertyType.Width, b),
         }));
     }
@@ -201,9 +203,52 @@ public class SizeTests
     }
 
     [Test]
-    public void FitChildren_Resolve_SumsChildSizes()
+    public void FitChildren_GetDependencies_YAxis_ReferencesChildYAndHeight()
     {
-        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [10, 20]), Is.EqualTo(30));
+        Element parent = NewElement();
+        Element a = NewElement();
+        parent.AddChild(a);
+
+        List<LayoutProperty> dependencies = Size.FitChildren().GetDependencies(new LayoutProperty(LayoutPropertyType.Height, parent));
+
+        Assert.That(dependencies, Is.EqualTo(new[]
+        {
+            new LayoutProperty(LayoutPropertyType.Y, a),
+            new LayoutProperty(LayoutPropertyType.Height, a),
+        }));
+    }
+
+    [Test]
+    public void FitChildren_Resolve_ComputesBoundingBox()
+    {
+        // child0: pos=10, size=5 → spans [10, 15]
+        // child1: pos=3, size=8 → spans [3, 11]
+        // bounding box: min=3, max=15 → 15-3 = 12
+        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [10, 5, 3, 8]), Is.EqualTo(12));
+    }
+
+    [Test]
+    public void FitChildren_Resolve_StackedChildren_ReturnsSameAsSum()
+    {
+        // child0: pos=0, size=10 → spans [0, 10]
+        // child1: pos=10, size=20 → spans [10, 30]
+        // bounding box: min=0, max=30 → 30
+        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [0, 10, 10, 20]), Is.EqualTo(30));
+    }
+
+    [Test]
+    public void FitChildren_Resolve_OverlappingChildren_ReturnsUnionExtent()
+    {
+        // child0: pos=0, size=15 → spans [0, 15]
+        // child1: pos=5, size=15 → spans [5, 20]
+        // bounding box: min=0, max=20 → 20
+        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [0, 15, 5, 15]), Is.EqualTo(20));
+    }
+
+    [Test]
+    public void FitChildren_Resolve_SingleChild_ReturnsChildSize()
+    {
+        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [7, 12]), Is.EqualTo(12));
     }
 
     [Test]

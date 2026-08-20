@@ -186,7 +186,7 @@ public class PosTests
         Element self = NewElement();
         Element reference = NewElement();
 
-        List<LayoutProperty> dependencies = Pos.Begin(reference).GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
+        List<LayoutProperty> dependencies = Pos.Begin(element: reference).GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
@@ -208,7 +208,7 @@ public class PosTests
         Element self = NewElement();
         Element reference = NewElement();
 
-        List<LayoutProperty> dependencies = Pos.End(reference).GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
+        List<LayoutProperty> dependencies = Pos.End(element: reference).GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
@@ -444,7 +444,7 @@ public class PosTests
     [Test]
     public void ToString_End_UsesElementName()
     {
-        Assert.That(Pos.End(new NamedElement("target")).ToString(), Is.EqualTo("End(target)"));
+        Assert.That(Pos.End(element: new NamedElement("target")).ToString(), Is.EqualTo("End(target)"));
     }
 
     [Test]

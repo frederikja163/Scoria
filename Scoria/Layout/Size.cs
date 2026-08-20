@@ -105,19 +105,38 @@ public abstract class Size : ILayoutResolver
     
     private sealed class FitChildrenSize : Size
     {
-        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) =>
-            property.Element.GetChildren().Select(e => property with { Element = e }).ToList();
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
+        {
+            List<LayoutProperty> properties = [];
+            foreach (Element child in property.Element.GetChildren())
+            {
+                properties.Add(new LayoutProperty(property.Type.SameAxisPosition(), child));
+                properties.Add(property with { Element = child });
+            }
+
+            return properties;
+        }
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies)
         {
-            return dependencies.Sum();
+            if (dependencies.Count == 0) return 0;
+            int min = int.MaxValue;
+            int max = int.MinValue;
+            for (int i = 0; i < dependencies.Count; i++)
+            {
+                int pos = dependencies[i++];
+                int size = dependencies[i];
+                min = int.Min(pos, min);
+                max = int.Max(pos + size, max);
+            }
+            return min == int.MaxValue || max == int.MaxValue ? 0 : max - min;
         }
 
         public override string ToString() => "FitChildren";
     }
 
     /// <summary>
-    /// Creates a size equal to the sum of the corresponding sizes of all direct children.
+    /// Creates a size equal to the bounding box of all direct children along this axis.
     /// </summary>
     public static Size FitChildren() => new FitChildrenSize();
 }
