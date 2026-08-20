@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Scoria.Drivers.Providers;
+using Scoria.Events;
 
 namespace Scoria.Drivers;
 
@@ -17,7 +18,7 @@ internal class ConsoleDriver : IConsoleDriver
 {
     private readonly IInputProvider[] InputProviders;
     private readonly IPlatformDriver PlatformDriver;
-    internal event Action<EventArgs>? OnEvent;
+    internal event Action<AnyEventArgs>? OnEvent;
 
 
     private readonly StringBuilder Buffer = new StringBuilder();

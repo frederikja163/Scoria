@@ -2,6 +2,7 @@
 using Scoria;
 using Scoria.Drivers;
 using Scoria.Drivers.Providers;
+using Scoria.Elements;
 using Scoria.Events;
 using Scoria.Layout;
 

@@ -1,4 +1,6 @@
-﻿namespace Scoria.Drivers;
+﻿using Scoria.Events;
+
+namespace Scoria.Drivers;
 
 internal interface IInputProvider
 {
@@ -6,5 +8,5 @@ internal interface IInputProvider
     public bool Enable { get; }
     public void Init(IConsoleDriver driver);
     public void Restore(IConsoleDriver driver);
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input);
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input);
 }

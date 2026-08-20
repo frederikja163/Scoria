@@ -1,4 +1,6 @@
-﻿namespace Scoria.Layout;
+﻿using Scoria.Elements;
+
+namespace Scoria.Layout;
 
 using EdgeCollection = HashSet<LayoutProperty>;
 using EdgeMap = Dictionary<LayoutProperty, HashSet<LayoutProperty>>;

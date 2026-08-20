@@ -20,7 +20,7 @@ internal sealed class PasteInputProvider : IInputProvider
         driver.Enable(PrivateMode.BracketedPaste, false);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         int pos = 0;
         if (!input.TryReadString(ref pos, PasteStart))

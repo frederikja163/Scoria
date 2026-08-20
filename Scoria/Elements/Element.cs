@@ -1,7 +1,7 @@
 ﻿using Scoria.Events;
 using Scoria.Layout;
 
-namespace Scoria;
+namespace Scoria.Elements;
 
 /// <summary>
 /// Base class for all visual elements in the layout tree.
@@ -27,8 +27,9 @@ public abstract class Element
     public Size Width { get; set; } = Size.Auto();
     /// <summary>Height of this element.</summary>
     public Size Height { get; set; } = Size.Auto();
+
     /// <summary>The parent element in the layout tree, or <see langword="null"/> if this is a root element.</summary>
-    public Element? Parent { get; set; } = null;
+    public Element? Parent { get; private set; } = null;
     /// <summary>The resolved layout values computed by the layout solver.</summary>
     protected internal CalculatedLayout CalculatedLayout { get; } = new();
 
@@ -44,6 +45,16 @@ public abstract class Element
         if (element.Parent is not null)
         {
             throw new Exception("Must remove element from parent before it can be added to a new element.");
+        }
+
+        if (!SupportsChild(element))
+        {
+            throw new NotSupportedException($"{this} cannot contain child {element}");
+        }
+
+        if (!element.SupportsParent(this))
+        {
+            throw new NotSupportedException($"{this} is not a valid parent for {element}");
         }
 
         element.Parent = this;
@@ -77,6 +88,16 @@ public abstract class Element
     public IEnumerable<Element> GetChildren()
     {
         return _children;
+    }
+
+    protected virtual bool SupportsParent(Element? parent)
+    {
+        return true;
+    }
+
+    protected virtual bool SupportsChild(Element element)
+    {
+        return true;
     }
     
     /// <summary>

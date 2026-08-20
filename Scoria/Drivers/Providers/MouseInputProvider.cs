@@ -22,7 +22,7 @@ internal sealed class MouseInputProvider : IInputProvider
         driver.Enable(PrivateMode.AnyEventMouse, false);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         if (!TryParseSgrMouse(ref input, out int cb, out int cx, out int cy, out bool down))
         {
@@ -34,7 +34,7 @@ internal sealed class MouseInputProvider : IInputProvider
 
         if ((cb & 32) == 32)
         {
-            EventArgs args = new MouseMoveEventArgs(cx, cy, _mouseX, _mouseY);
+            AnyEventArgs args = new MouseMoveEventArgs(cx, cy, _mouseX, _mouseY);
             _mouseX = cx;
             _mouseY = cy;
             return args;

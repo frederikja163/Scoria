@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using Scoria;
+using Scoria.Elements;
 using Scoria.Layout;
 
 namespace Scoria.Tests.Layout;

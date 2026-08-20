@@ -1,4 +1,6 @@
-﻿namespace Scoria.Events;
+﻿using Scoria.Elements;
+
+namespace Scoria.Events;
 using EventMap = Dictionary<Type, Delegate?>;
 
 public enum EventPhase

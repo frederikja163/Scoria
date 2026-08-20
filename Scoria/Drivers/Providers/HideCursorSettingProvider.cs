@@ -1,4 +1,6 @@
-﻿namespace Scoria.Drivers.Providers;
+﻿using Scoria.Events;
+
+namespace Scoria.Drivers.Providers;
 
 internal sealed class HideCursorSettingProvider : IInputProvider
 {
@@ -15,7 +17,7 @@ internal sealed class HideCursorSettingProvider : IInputProvider
         driver.Enable(PrivateMode.ShowCursor, true);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         return null;
     }

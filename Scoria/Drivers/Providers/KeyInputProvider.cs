@@ -49,7 +49,7 @@ internal sealed class KeyInputProvider : IInputProvider
         driver.Enable(PrivateMode.ApplicationKeypad, false);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         if (input.Length == 1)
         {

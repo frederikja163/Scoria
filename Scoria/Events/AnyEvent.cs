@@ -1,4 +1,6 @@
-﻿namespace Scoria.Events;
+﻿using Scoria.Elements;
+
+namespace Scoria.Events;
 
 public abstract class AnyEventArgs : EventArgs
 {

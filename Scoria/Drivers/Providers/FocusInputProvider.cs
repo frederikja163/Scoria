@@ -19,7 +19,7 @@ internal sealed class FocusInputProvider : IInputProvider
         driver.Enable(PrivateMode.FocusEvents, false);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         int pos = 0;
         if (input.TryReadString(ref pos, FocusLost))

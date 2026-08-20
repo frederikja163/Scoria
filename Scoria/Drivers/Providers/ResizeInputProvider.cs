@@ -17,7 +17,7 @@ internal sealed class ResizeInputProvider : IInputProvider
         driver.Enable(PrivateMode.WindowResize, false);
     }
 
-    public EventArgs? HandleInput(ref ReadOnlySpan<char> input)
+    public AnyEventArgs? HandleInput(ref ReadOnlySpan<char> input)
     {
         if (!TryParseResize(ref input, out int width, out int height))
         {

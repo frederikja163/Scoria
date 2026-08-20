@@ -1,4 +1,6 @@
-﻿namespace Scoria.Layout;
+﻿using Scoria.Elements;
+
+namespace Scoria.Layout;
 
 /// <summary>
 /// Identifies a layout property on an element (position or size along an axis).
