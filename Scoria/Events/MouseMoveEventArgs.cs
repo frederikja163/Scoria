@@ -1,7 +1,7 @@
 ﻿namespace Scoria.Events;
 
 /// <summary>Provides data for mouse move events.</summary>
-public sealed class MouseMoveEventArgs : EventArgs
+public sealed class MouseMoveEventArgs : AnyEventArgs
 {
     internal MouseMoveEventArgs(int x, int y, int prevX, int prevY)
     {

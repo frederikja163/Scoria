@@ -1,4 +1,5 @@
-﻿using Scoria.Layout;
+﻿using Scoria.Events;
+using Scoria.Layout;
 
 namespace Scoria;
 
@@ -8,7 +9,12 @@ namespace Scoria;
 public abstract class Element
 {
     private readonly List<Element> _children = new List<Element>();
-    
+
+    public Element()
+    {
+        Events = new EventRouter(this);
+    }
+
     // TODO: Event system
     // TODO: Hierarchical theme system
     // TODO Layout system
@@ -21,10 +27,12 @@ public abstract class Element
     public Size Width { get; set; } = Size.Auto();
     /// <summary>Height of this element.</summary>
     public Size Height { get; set; } = Size.Auto();
-    /// <summary>The resolved layout values computed by the layout solver.</summary>
-    protected internal CalculatedLayout CalculatedLayout { get; } = new();
     /// <summary>The parent element in the layout tree, or <see langword="null"/> if this is a root element.</summary>
     public Element? Parent { get; set; } = null;
+    /// <summary>The resolved layout values computed by the layout solver.</summary>
+    protected internal CalculatedLayout CalculatedLayout { get; } = new();
+
+    public EventRouter Events { get; }
 
     /// <summary>
     /// Adds a child element to this element.

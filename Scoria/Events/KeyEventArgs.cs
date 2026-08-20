@@ -1,11 +1,11 @@
 ﻿namespace Scoria.Events;
 
-public sealed class KeyEventArgs : EventArgs
+public sealed class KeyEventArgs : AnyEventArgs
 {
     public Key Key { get; }
     public char? Char { get; }
 
-    public KeyEventArgs(Key key, char? c)
+    internal KeyEventArgs(Key key, char? c)
     {
         Key = key;
         Char = c;

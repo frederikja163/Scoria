@@ -1,7 +1,7 @@
 ﻿namespace Scoria.Events;
 
 /// <summary>Provides data for mouse button press and release events.</summary>
-public sealed class MouseButtonEventArgs : EventArgs
+public sealed class MouseButtonEventArgs : AnyEventArgs
 {
     internal MouseButtonEventArgs(Button button, int x, int y, bool down)
     {

@@ -1,7 +1,7 @@
 ﻿namespace Scoria.Events;
 
 /// <summary>Provides data for mouse scroll wheel events.</summary>
-public sealed class MouseScrollEventArgs : EventArgs
+public sealed class MouseScrollEventArgs : AnyEventArgs
 {
     internal MouseScrollEventArgs(int x, int y, bool down)
     {

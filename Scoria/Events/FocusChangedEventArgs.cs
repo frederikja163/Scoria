@@ -1,7 +1,7 @@
 ﻿namespace Scoria.Events;
 
 /// <summary>Provides data for terminal focus-gained and focus-lost events.</summary>
-public sealed class FocusChangedEventArgs : EventArgs
+public sealed class FocusChangedEventArgs : AnyEventArgs
 {
     internal FocusChangedEventArgs(bool focused)
     {
