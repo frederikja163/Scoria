@@ -1,9 +1,9 @@
 namespace Scoria.Events;
 
 /// <summary>Provides data for terminal text-area resize events.</summary>
-public sealed class ResizeEventArgs : AnyEventArgs
+public sealed class WindowResizeEventArgs : AnyEventArgs
 {
-    internal ResizeEventArgs(int width, int height)
+    internal WindowResizeEventArgs(int width, int height)
     {
         Width = width;
         Height = height;

@@ -30,10 +30,8 @@ public sealed class EventRouter(Element element)
     private void Dispatch<T>(T eventArgs, EventPhase phase) where T : AnyEventArgs
     {
         eventArgs.CurrentTarget = _element;
-        EventDelegate<T>? ev = (EventDelegate<T>?)_allEvents[phase].GetValueOrDefault(typeof(T));
-        ev?.Invoke(eventArgs);
-        EventDelegate<T>? anyEv = (EventDelegate<T>?)_allEvents[phase].GetValueOrDefault(typeof(AnyEventArgs));
-        anyEv?.Invoke(eventArgs);
+        _allEvents[phase].GetValueOrDefault(eventArgs.GetType())?.DynamicInvoke(eventArgs);
+        _allEvents[phase].GetValueOrDefault(typeof(AnyEventArgs))?.DynamicInvoke(eventArgs);
     }
 
     internal static void Dispatch(AnyEventArgs eventArgs)

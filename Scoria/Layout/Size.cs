@@ -70,8 +70,13 @@ public abstract class Size : ILayoutResolver
     /// </param>
     public static Size Relative(float factor, Element? element = null) => new RelativeSize(factor, element);
 
-    private sealed class FillSize(Element? element) : RelativeSize(1, element)
+    private sealed class FillSize(int margin, Element? element) : RelativeSize(1, element)
     {
+        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        {
+            return base.Resolve(property, dependencies) - margin;
+        }
+
         public override string ToString() => $"Fill({ElementString})";
     }
 
@@ -82,7 +87,7 @@ public abstract class Size : ILayoutResolver
     /// <param name="element">
     /// The element to fill. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Size Fill(Element? element = null) => new FillSize(element);
+    public static Size Fill(int margin = 0, Element? element = null) => new FillSize(margin, element);
 
     private sealed class AspectSize(float aspectRatio) : Size
     {

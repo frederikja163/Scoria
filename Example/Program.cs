@@ -1,7 +1,5 @@
 ﻿using System.Text;
 using Scoria;
-using Scoria.Drivers;
-using Scoria.Drivers.Providers;
 using Scoria.Elements;
 using Scoria.Events;
 using Scoria.Layout;
@@ -9,24 +7,7 @@ using Scoria.Layout;
 Console.InputEncoding = Encoding.UTF8;
 Console.OutputEncoding = Encoding.UTF8;
 
-ConsoleDriver driver = new ConsoleDriver(
-    new FocusInputProvider(),
-    new KeyInputProvider(),
-    new MouseInputProvider(),
-    new PasteInputProvider(),
-    new ResizeInputProvider()
-);
-
-driver.OnEvent += eventArgs =>
-{
-    if (eventArgs is MouseButtonEventArgs args && args.Button == Button.Middle)
-    {
-        Environment.Exit(0);
-    }
-};
-
-Surface surface = new Surface(driver.Width, driver.Height);
-surface.Fill(' ', new Style(255, 255, 255, 20, 20, 30));
+var window = new Window { Title = "Scoria Layout Demo" };
 
 Style titleStyle    = new Style(255, 255, 100, 20, 20, 30, 255, StyleAttributes.Bold);
 Style subtitleStyle = new Style(160, 220, 255, 20, 20, 30);
@@ -41,24 +22,7 @@ int headerHeight = 5;
 int sidebarWidth = 24;
 
 // ═══════════════════════════════════════════════════════════════════════
-// ROOT – sized to the terminal dimensions
-//   Pos.Abs(0)              – fixed origin at (0, 0)
-//   Size.Abs(driver.Width)  – fixed terminal width
-//   Size.Abs(driver.Height) – fixed terminal height
-// ═══════════════════════════════════════════════════════════════════════
-PanelElement root = new PanelElement
-{
-    X = Pos.Abs(0),
-    Y = Pos.Abs(0),
-    Width = Size.Abs(driver.Width),
-    Height = Size.Abs(driver.Height),
-    Title = "Scoria Layout Demo",
-};
-
-// ═══════════════════════════════════════════════════════════════════════
 // HEADER – fixed 5 rows tall, fills parent width
-//   Size.Abs(5)  – exactly 5 rows
-//   Size.Fill()  – full width of root (no offset, so no overflow)
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement header = new PanelElement
 {
@@ -69,10 +33,8 @@ PanelElement header = new PanelElement
     Title = "Header",
     ThinBorders = true,
 };
-root.AddChild(header);
+window.AddChild(header);
 
-// Pos.Center()  – horizontally centered within header
-// Pos.Abs(1)    – 1 row from top of header
 header.AddChild(new TextElement
 {
     X = Pos.Center(),
@@ -81,8 +43,6 @@ header.AddChild(new TextElement
     Style = titleStyle,
 });
 
-// Pos.Begin()   – left edge of header (Relative(0))
-// Pos.Abs(3)    – 3 rows from top
 header.AddChild(new TextElement
 {
     X = Pos.Begin(1),
@@ -100,11 +60,7 @@ header.AddChild(new TextElement
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// SIDEBAR – below header, fixed width
-//   Pos.Abs(0)            – left edge
-//   Pos.After(0, header)  – immediately below header
-//   Size.Abs(24)      – 24 columns wide
-//   Size.FitChildren() – height matches the sum of its children's heights
+// SIDEBAR – below header, fixed width, height fits children
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement sidebar = new PanelElement
 {
@@ -114,10 +70,8 @@ PanelElement sidebar = new PanelElement
     Height = Size.FitChildren(),
     Title = "Sidebar",
 };
-root.AddChild(sidebar);
+window.AddChild(sidebar);
 
-// Abs positioning for Y avoids circular dependency with FitChildren on sidebar height.
-// The bounding box of these children determines the sidebar's height.
 sidebar.AddChild(new TextElement
 {
     X = Pos.Begin(2),
@@ -152,24 +106,21 @@ sidebar.AddChild(new TextElement
 
 // ═══════════════════════════════════════════════════════════════════════
 // MAIN CONTENT – to the right of sidebar, below header
-//   Both axes have offsets, so Size.Fill() would overflow on both.
-//   Use explicit sizes: width = terminal - sidebar, height = terminal - header.
+//   Requires Width/Height from Application to compute
+//   (terminal width - sidebar, terminal height - header).
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement main = new PanelElement
 {
     X = Pos.After(0, sidebar),
     Y = Pos.After(0, header),
-    Width = Size.Abs(driver.Width - sidebarWidth),
-    Height = Size.Abs(driver.Height - headerHeight),
+    Width = Size.Fill(sidebarWidth, window),
+    Height = Size.Fill(headerHeight, window),
     Title = "Main Content",
 };
-root.AddChild(main);
+window.AddChild(main);
 
 // ═══════════════════════════════════════════════════════════════════════
-// CARD 1 – Stats card with fixed size, positioned with Relative
-//   Pos.Relative(0.05f, main)  – 5% from main's left/top edge
-//   Size.Abs(28) x Size.Abs(8) – fixed 28×8 box
-//   Children use Relative() to spread across the card area
+// CARD 1 – Stats card
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement card1 = new PanelElement
 {
@@ -181,7 +132,6 @@ PanelElement card1 = new PanelElement
 };
 main.AddChild(card1);
 
-// Relative positioning distributes content across the card's 28×8 area
 card1.AddChild(new TextElement
 {
     X = Pos.Relative(0.05f, card1),
@@ -215,10 +165,7 @@ card1.AddChild(new TextElement
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// CARD 2 – System card, positioned below card1 via After()
-//   Pos.Relative(0.05f, main)  – same X as card1
-//   Pos.After(1, card1)        – 1 row below card1's bottom edge
-//   Size.Abs(28) x Size.Abs(6)
+// CARD 2 – System card, positioned below card1
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement card2 = new PanelElement
 {
@@ -263,10 +210,7 @@ card2.AddChild(new TextElement
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// SIDE PANEL – to the right of cards, fixed dimensions
-//   Pos.After(2, card1)   – 2 columns right of card1's right edge
-//   Size.Relative(0.4f)   – 40% of main's width
-//   Size.Abs(8)           – fixed 8 rows tall
+// SIDE PANEL – to the right of cards
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement sidePanel = new PanelElement
 {
@@ -278,8 +222,6 @@ PanelElement sidePanel = new PanelElement
 };
 main.AddChild(sidePanel);
 
-// Pos.Center() – centered horizontally within sidePanel
-// Pos.Center() – centered vertically within sidePanel
 sidePanel.AddChild(new TextElement
 {
     X = Pos.Center(),
@@ -288,8 +230,6 @@ sidePanel.AddChild(new TextElement
     Style = new Style(255, 150, 255, 20, 20, 40, 255, StyleAttributes.Bold | StyleAttributes.Underline),
 });
 
-// Pos.End(1)   – right edge with 1-char padding
-// Pos.Begin(1) – top edge with 1-char padding
 sidePanel.AddChild(new TextElement
 {
     X = Pos.End(1),
@@ -298,8 +238,6 @@ sidePanel.AddChild(new TextElement
     Style = dimStyle,
 });
 
-// Pos.Begin(1) – left edge with 1-char padding
-// Pos.End(1)   – bottom edge with 1-char padding
 sidePanel.AddChild(new TextElement
 {
     X = Pos.Begin(1),
@@ -309,27 +247,23 @@ sidePanel.AddChild(new TextElement
 });
 
 // ═══════════════════════════════════════════════════════════════════════
-// STATUS BAR – at the very bottom of root
-//   Pos.Relative(1f, root)  – End of root (bottom edge)
-//   Relative(1f) = (root.Height - selfHeight) * 1 + root.Y
-//   With root.Y=0 and selfHeight=1: Y = root.Height - 1 (last row)
-//   Size.Fill() is safe here: X=Abs(0), so no horizontal overflow.
+// STATUS BAR – at the very bottom
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement statusBar = new PanelElement
 {
     X = Pos.Abs(0),
-    Y = Pos.Relative(1f, root),
+    Y = Pos.Relative(1f, window),
     Width = Size.Fill(),
     Height = Size.Abs(1),
     Title = "",
 };
-root.AddChild(statusBar);
+window.AddChild(statusBar);
 
 statusBar.AddChild(new TextElement
 {
     X = Pos.Begin(1),
     Y = Pos.Abs(0),
-    Text = "Ready | Middle-click to exit",
+    Text = "Ready",
     Style = statusStyle,
 });
 
@@ -341,19 +275,16 @@ statusBar.AddChild(new TextElement
     Style = dimStyle,
 });
 
-// ═══════════════════════════════════════════════════════════════════════
-// SOLVE – resolve all layout properties via topological sort
-//   includeSelf: true  – solve root's own layout too
-// ═══════════════════════════════════════════════════════════════════════
-LayoutSolver.Solve(root, true);
 
 // ═══════════════════════════════════════════════════════════════════════
-// RENDER LOOP
+// RUN
 // ═══════════════════════════════════════════════════════════════════════
-while (true)
+var app = new Application(new ApplicationOptions { Window = window });
+window.Events.Add<MouseButtonEventArgs>(e =>
 {
-    root.Render(surface);
-    surface.ExpandBorders();
-    driver.Frame(surface);
-    driver.PollInput();
-}
+    if (e.Button == Button.Middle)
+    {
+        app.Stop();
+    }
+});
+app.Start();

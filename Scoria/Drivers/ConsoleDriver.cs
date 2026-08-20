@@ -108,6 +108,11 @@ internal class ConsoleDriver : IConsoleDriver
         {
             if (inputProvider.HandleInput(ref inp) is { } args)
             {
+                if (args is WindowResizeEventArgs resizeEventArgs)
+                {
+                    _width = resizeEventArgs.Width;
+                    _height = resizeEventArgs.Height;
+                }
                 OnEvent?.Invoke(args);
                 return true;
             }

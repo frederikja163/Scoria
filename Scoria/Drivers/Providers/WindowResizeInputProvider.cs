@@ -24,7 +24,7 @@ internal sealed class ResizeInputProvider : IInputProvider
             return null;
         }
 
-        return new ResizeEventArgs(width, height);
+        return new WindowResizeEventArgs(width, height);
     }
 
     private static bool TryParseResize(ref ReadOnlySpan<char> input, out int width, out int height)

@@ -15,18 +15,48 @@ public abstract class Element
         Events = new EventRouter(this);
     }
 
-    // TODO: Event system
     // TODO: Hierarchical theme system
-    // TODO Layout system
 
     /// <summary>Horizontal position of this element within its parent.</summary>
-    public Pos X { get; set; } = Pos.Auto();
+    public Pos X
+    {
+        get;
+        set
+        {
+            field = value;
+            SetNeedsCalculateLayout();
+        }
+    } = Pos.Auto();
     /// <summary>Vertical position of this element within its parent.</summary>
-    public Pos Y { get; set; } = Pos.Auto();
+    public Pos Y
+    {
+        get;
+        set
+        {
+            field = value;
+            SetNeedsCalculateLayout();
+        }
+    } = Pos.Auto();
     /// <summary>Width of this element.</summary>
-    public Size Width { get; set; } = Size.Auto();
+    public Size Width
+    {
+        get;
+        set
+        {
+            field = value;
+            SetNeedsCalculateLayout();
+        }
+    } = Size.Auto();
     /// <summary>Height of this element.</summary>
-    public Size Height { get; set; } = Size.Auto();
+    public Size Height
+    {
+        get;
+        set
+        {
+            field = value;
+            SetNeedsCalculateLayout();
+        }
+    } = Size.Auto();
 
     /// <summary>The parent element in the layout tree, or <see langword="null"/> if this is a root element.</summary>
     public Element? Parent { get; private set; } = null;
@@ -34,6 +64,16 @@ public abstract class Element
     protected internal CalculatedLayout CalculatedLayout { get; } = new();
 
     public EventRouter Events { get; }
+
+    public virtual void SetNeedsCalculateLayout()
+    {
+        Parent?.SetNeedsCalculateLayout();
+    }
+
+    public virtual void SetNeedsRender()
+    {
+        Parent?.SetNeedsRender();
+    }
 
     /// <summary>
     /// Adds a child element to this element.
@@ -84,7 +124,7 @@ public abstract class Element
     /// <summary>
     /// Gets all child elements of this element.
     /// </summary>
-    /// <returns>An enumerable of child elements.</returns>
+    /// <returns>An IEnumerable of child elements.</returns>
     public IEnumerable<Element> GetChildren()
     {
         return _children;
@@ -104,7 +144,7 @@ public abstract class Element
     /// Renders this element and its children to the given surface.
     /// </summary>
     /// <param name="surface">The surface to render to.</param>
-    public virtual void Render(ISurface surface)
+    protected virtual void Render(ISurface surface)
     {
         foreach (Element child in GetChildren())
         {
@@ -134,7 +174,7 @@ public sealed class PanelElement : Element
     public bool ThinBorders = false;
     
     /// <inheritdoc/>
-    public override void Render(ISurface surface)
+    protected override void Render(ISurface surface)
     {
         surface.SubSurface(CalculatedLayout.X, CalculatedLayout.Y, CalculatedLayout.Width, CalculatedLayout.Height).Borders(Title, thin: ThinBorders);
         base.Render(surface);
@@ -153,7 +193,7 @@ public sealed class TextElement : Element
     
     // TODO: Text element is missing a lot of features, like text wrapping, proper size detection etc.
     /// <inheritdoc/>
-    public override void Render(ISurface surface)
+    protected override void Render(ISurface surface)
     {
         for (int i = 0; i < Text.Length; i++)
         {

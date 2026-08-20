@@ -1,6 +1,8 @@
 ﻿using Scoria.Drivers;
+using Scoria.Drivers.Providers;
 using Scoria.Elements;
 using Scoria.Events;
+using Scoria.Layout;
 
 namespace Scoria;
 
@@ -13,13 +15,17 @@ public sealed class Application
 {
     public static Application? Current { get; private set; }
     
-    private readonly ConsoleDriver _driver = new();
+    private readonly ConsoleDriver _driver = new(
+        new FocusInputProvider(),
+        new KeyInputProvider(),
+        new MouseInputProvider(),
+        new PasteInputProvider(),
+        new ResizeInputProvider());
 
     public Application(ApplicationOptions options)
     {
         Window = options.Window;
         ActiveElement = Window;
-        _driver.OnEvent += DriverOnOnEvent;
     }
 
     private void DriverOnOnEvent(AnyEventArgs args)
@@ -38,14 +44,16 @@ public sealed class Application
     {
         IsRunning = true;
         Current = this;
-
+        _driver.OnEvent += DriverOnOnEvent;
         while (IsRunning)
         {
-            Surface surface = new Surface(_driver.Width, _driver.Height);
-            Window.Render(surface);
+            Surface surface = Window.GetSurface(_driver.Width, _driver.Height);
             _driver.Frame(surface);
             _driver.PollInput();
         }
+
+        _driver.OnEvent -= DriverOnOnEvent;
+        Current = null;
     }
 
     public void Stop()

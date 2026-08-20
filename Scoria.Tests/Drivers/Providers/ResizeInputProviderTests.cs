@@ -40,8 +40,8 @@ public class ResizeInputProviderTests
     public void HandleInput_ResizeReport_ReturnsResizeEventArgs(string input, int width, int height)
     {
         EventArgs? result = Handle(_provider, input);
-        Assert.That(result, Is.TypeOf<ResizeEventArgs>());
-        var args = (ResizeEventArgs)result!;
+        Assert.That(result, Is.TypeOf<WindowResizeEventArgs>());
+        var args = (WindowResizeEventArgs)result!;
         Assert.That(args.Width, Is.EqualTo(width));
         Assert.That(args.Height, Is.EqualTo(height));
     }
