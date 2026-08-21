@@ -71,7 +71,15 @@ public class SizeTests
     {
         TextElement element = new() { Text = "Hello" };
 
-        Assert.That(Size.Auto().Resolve(new LayoutProperty(LayoutPropertyType.Width, element), []), Is.EqualTo(5));
+        Assert.That(Size.Auto().Resolve(new LayoutProperty(LayoutPropertyType.Width, element), [10]), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Auto_Resolve_TextElementWidth_ClampedToParentWidth()
+    {
+        TextElement element = new() { Text = "Hello" };
+
+        Assert.That(Size.Auto().Resolve(new LayoutProperty(LayoutPropertyType.Width, element), [3]), Is.EqualTo(3));
     }
 
     [Test]
