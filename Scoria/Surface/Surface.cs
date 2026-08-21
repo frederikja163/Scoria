@@ -12,18 +12,21 @@ public sealed class Surface : ISurface
     /// <summary>Initializes a new <see cref="Surface"/> with the specified dimensions.</summary>
     /// <param name="width">The width of the surface in character cells.</param>
     /// <param name="height">The height of the surface in character cells.</param>
-    public Surface(int width, int height)
+    public Surface(int width, int height, Theme theme)
     {
         Width = width;
         Height = height;
         _glyphs = new char[width, height];
         _styles = new Style[width, height];
+        Theme = theme;
     }
 
     /// <inheritdoc />
     public int Width { get; }
     /// <inheritdoc />
     public int Height { get; }
+    
+    public Theme Theme { get; }
 
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)

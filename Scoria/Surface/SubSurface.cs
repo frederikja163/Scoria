@@ -8,7 +8,7 @@ public sealed class SubSurface : ISurface
 {
     private readonly ISurface _parent;
 
-    internal SubSurface(ISurface parent, int offsetX, int offsetY, int width, int height)
+    internal SubSurface(ISurface parent, int offsetX, int offsetY, int width, int height, Theme theme)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(offsetX);
         ArgumentOutOfRangeException.ThrowIfNegative(offsetY);
@@ -21,6 +21,7 @@ public sealed class SubSurface : ISurface
         OffsetY = offsetY;
         Width = width;
         Height = height;
+        Theme = theme;
     }
 
     /// <summary>Gets the X offset of this sub-surface within the parent surface.</summary>
@@ -31,7 +32,9 @@ public sealed class SubSurface : ISurface
     public int Width { get; }
     /// <inheritdoc />
     public int Height { get; }
-    
+
+    public Theme Theme { get; }
+
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {

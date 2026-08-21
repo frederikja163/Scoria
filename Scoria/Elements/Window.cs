@@ -7,8 +7,15 @@ public sealed class Window : Element
     private bool NeedsCalculateLayout { get; set; }
     private bool NeedsRender { get; set; }
 
-    internal Surface Surface = new Surface(0, 0);
+    private Surface _surface;
 
+    public Window()
+    {
+        _surface = new Surface(0, 0, Theme);
+    }
+
+    public Theme Theme { get; set; } = Theme.Default;
+    
     public string Title
     {
         get;
@@ -36,12 +43,12 @@ public sealed class Window : Element
 
     internal Surface GetSurface(int width, int height)
     {
-        if (Surface.Width != width)
+        if (_surface.Width != width)
         {
             Width = Size.Abs(width);
         }
 
-        if (Surface.Height != height)
+        if (_surface.Height != height)
         {
             Height = Size.Abs(height);
         }
@@ -55,16 +62,16 @@ public sealed class Window : Element
         if (NeedsRender)
         {
             NeedsRender = false;
-            Surface = new Surface(width, height);
-            Render(Surface);
+            _surface = new Surface(width, height, Theme);
+            Render(_surface);
         }
 
-        return Surface;
+        return _surface;
     }
 
     protected override void Render(ISurface surface)
     {
-        surface.Fill(' ', new Style(255, 255, 255, 20, 20, 30));
+        surface.Fill(' ', Theme.Background);
         surface.Borders(Title, false);
         base.Render(surface);
         surface.ExpandBorders();

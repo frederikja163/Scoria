@@ -9,6 +9,8 @@ public interface ISurface
     public int Width { get; }
     /// <summary>Gets the height of the surface in character cells.</summary>
     public int Height { get; }
+    
+    public Theme Theme { get; }
 
     /// <summary>Writes a single character at the specified position with the given style.
     /// If the style's <see cref="Style.Alpha"/> is less than 255, the background color is alpha-blended with the existing cell.</summary>
@@ -43,9 +45,9 @@ public static class SurfaceExtensions
     /// <param name="width">The width of the sub-surface in character cells.</param>
     /// <param name="height">The height of the sub-surface in character cells.</param>
     /// <returns>A <see cref="SubSurface"/> that maps to the specified region of the parent surface.</returns>
-    public static SubSurface SubSurface(this ISurface surface, int offsetX, int offsetY, int width, int height)
+    public static SubSurface SubSurface(this ISurface surface, int offsetX, int offsetY, int width, int height, Theme? theme = null)
     {
-        return new SubSurface(surface, offsetX, offsetY, width, height);
+        return new SubSurface(surface, offsetX, offsetY, width, height, theme ?? surface.Theme);
     }
 
     /// <summary>Creates a <see cref="SubSurface"/> view into a region of this surface specified by <see cref="Range"/> values.</summary>
@@ -53,11 +55,11 @@ public static class SurfaceExtensions
     /// <param name="x">The range of columns to include.</param>
     /// <param name="y">The range of rows to include.</param>
     /// <returns>A <see cref="SubSurface"/> that maps to the specified range of the parent surface.</returns>
-    public static SubSurface SubSurface(this ISurface surface, Range x, Range y)
+    public static SubSurface SubSurface(this ISurface surface, Range x, Range y, Theme? theme = null)
     {
         (int offsetX, int width) = x.GetOffsetAndLength(surface.Width);
         (int offsetY, int height) = y.GetOffsetAndLength(surface.Height);
-        return new SubSurface(surface, offsetX, offsetY, width, height);
+        return new SubSurface(surface, offsetX, offsetY, width, height, theme ?? surface.Theme);
     }
 
     /// <summary>Fills a rectangular region of the surface with the specified character and style.</summary>
@@ -100,30 +102,29 @@ public static class SurfaceExtensions
         return (uint)x < surface.Width && (uint)y < surface.Height;
     }
 
-    public static void Borders(this ISurface surface, string title = "", bool thin = false, Style? style = null)
+    public static void Borders(this ISurface surface, string title = "", bool thin = false)
     {
         char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
-        style ??= Theme.CurrentTheme.Border;
 
         for (int x = 0; x < surface.Width; x++)
         {
-            surface.Write(borderCharacter, x, 0, style.Value);
-            surface.Write(borderCharacter, x, surface.Height - 1, style.Value);
+            surface.Write(borderCharacter, x, 0, surface.Theme.Border);
+            surface.Write(borderCharacter, x, surface.Height - 1, surface.Theme.Border);
         }
         for (int y = 0; y < surface.Height; y++)
         {
-            surface.Write(borderCharacter, 0, y, style.Value);
-            surface.Write(borderCharacter, surface.Width - 1, y, style.Value);
+            surface.Write(borderCharacter, 0, y, surface.Theme.Border);
+            surface.Write(borderCharacter, surface.Width - 1, y, surface.Theme.Border);
         }
 
         if (!string.IsNullOrEmpty(title))
         {
-            Theme.CurrentTheme.Borders.WriteTitle(surface, title);
+            surface.Theme.Borders.WriteTitle(surface, title);
         }
     }
 
     public static void ExpandBorders(this ISurface surface)
     {
-        Theme.CurrentTheme.Borders.ExpandBorders(surface);
+        surface.Theme.Borders.ExpandBorders(surface);
     }
 }

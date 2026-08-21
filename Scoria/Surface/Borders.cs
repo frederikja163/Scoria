@@ -40,7 +40,7 @@ public sealed class Borders : IBorders
         // TODO Handle cases where the title is too long.
         for (int i = 0; i < title.Length; i++)
         {
-            surface.Write(title[i], 3 + i, 0, Theme.CurrentTheme.Title);
+            surface.Write(title[i], 3 + i, 0, surface.Theme.Title);
         }
     }
 
