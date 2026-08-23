@@ -22,7 +22,7 @@ public enum EventPhase
 /// </summary>
 public sealed class EventRouter(Element element)
 {
-    private readonly Element _element;
+    private readonly Element _element = element;
     private Dictionary<EventPhase, EventMap> _allEvents = Enum.GetValues<EventPhase>().ToDictionary(p => p, _ => new EventMap());
 
     /// <summary>Adds an event handler for events of type <typeparamref name="T"/>.</summary>

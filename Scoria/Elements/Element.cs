@@ -16,7 +16,10 @@ public abstract class Element
         Events = new EventRouter(this);
     }
 
-    // TODO: Hierarchical theme system
+    protected Pos XDefault { get; set; } = Pos.Center();
+    protected Pos YDefault { get; set; } = Pos.Center();
+    protected Size WidthDefault { get; set; } = Size.Fill();
+    protected Size HeightDefault { get; set; } = Size.Fill();
 
     /// <summary>Horizontal position of this element within its parent.</summary>
     public Pos X
@@ -156,15 +159,24 @@ public abstract class Element
         }
     }
 
-    protected internal virtual List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType layoutPropertyType)
+    protected internal virtual List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType type)
     {
-        return [];
+        return GetDefaultLayoutResolver(type).GetDependencies(new LayoutProperty(type, this));
     }
 
-    protected internal virtual int ResolveAutoLayout(LayoutPropertyType propertyType, List<int> dependencies)
+    protected internal virtual int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
     {
-        return 0;
+        return GetDefaultLayoutResolver(type).Resolve(new LayoutProperty(type, this), dependencies);
     }
+
+    private ILayoutResolver GetDefaultLayoutResolver(LayoutPropertyType propertyType) => propertyType switch
+    {
+        LayoutPropertyType.X => XDefault,
+        LayoutPropertyType.Y => YDefault,
+        LayoutPropertyType.Width => WidthDefault,
+        LayoutPropertyType.Height => HeightDefault,
+        _ => throw new ArgumentOutOfRangeException(nameof(propertyType), propertyType, null)
+    };
 }
 
 /// <summary>
@@ -207,20 +219,20 @@ public sealed class TextElement : Element
         base.Render(surface);
     }
 
-    protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType layoutPropertyType)
+    protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType type)
     {
-        if (layoutPropertyType == LayoutPropertyType.Width)
+        if (type == LayoutPropertyType.Width)
             return [new LayoutProperty(LayoutPropertyType.Width, Parent)];
-        if (layoutPropertyType == LayoutPropertyType.Height)
+        if (type == LayoutPropertyType.Height)
             return [new(LayoutPropertyType.Width, this)];
         return [];
     }
 
-    protected internal override int ResolveAutoLayout(LayoutPropertyType propertyType, List<int> dependencies)
+    protected internal override int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
     {
-        if (propertyType == LayoutPropertyType.Width)
+        if (type == LayoutPropertyType.Width)
             return int.Min(dependencies[0], Text.Length);
-        if (propertyType == LayoutPropertyType.Height)
+        if (type == LayoutPropertyType.Height)
         {
             int width = dependencies[0];
             // Integer division with rounding up.

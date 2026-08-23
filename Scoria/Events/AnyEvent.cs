@@ -13,7 +13,7 @@ public abstract class AnyEventArgs : EventArgs
     /// <summary>Gets the element currently handling the event during routing.</summary>
     public Element CurrentTarget { get; internal set; } = null!;
     /// <summary>Gets a value indicating whether propagation has been stopped. Defaults to <see langword="true"/> until dispatch begins.</summary>
-    public bool PropagationStopped { get; private set; } = true;
+    public bool PropagationStopped { get; private set; } = false;
 
     /// <summary>Prevents the event from being handled by any further elements in the route.</summary>
     public void StopPropagation()

@@ -20,7 +20,15 @@ public sealed class Window : Element
     }
 
     /// <summary>Gets or sets the theme used to render this window and inherited by its surface.</summary>
-    public Theme Theme { get; set; } = Theme.Default;
+    public Theme Theme
+    {
+        get;
+        set
+        {
+            field = value;
+            SetNeedsRender();
+        }
+    } = Theme.Default;
 
     /// <summary>Gets or sets the title displayed in the window's top border.</summary>
     public string Title
