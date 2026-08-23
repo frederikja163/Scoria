@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Scoria.Elements;
 
 namespace Scoria.Layout;
@@ -20,6 +20,7 @@ public abstract class Pos : ILayoutResolver
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
 
+        /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
     }
 
@@ -27,12 +28,13 @@ public abstract class Pos : ILayoutResolver
     /// Creates a position that is automatically resolved based on the element's layout dependencies.
     /// </summary>
     public static Pos Auto() => new AutoPos();
-    
+
     private sealed class AbsolutePos(int value) : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => [];
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => value;
 
+        /// <summary>Returns "Absolute(value)".</summary>
         public override string ToString() => $"Absolute({value})";
     }
 
@@ -76,6 +78,7 @@ public abstract class Pos : ILayoutResolver
             return (int)((refSize - size) * factor) + refPos;
         }
 
+        /// <summary>Returns "Relative(factor, reference)".</summary>
         public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
     }
     
@@ -93,6 +96,7 @@ public abstract class Pos : ILayoutResolver
     
     private sealed class CenterPos(Element? element) : RelativePos(0.5f, element)
     {
+        /// <summary>Returns "Center(reference)".</summary>
         public override string ToString() => $"Center({ElementString})";
     }
 
@@ -112,6 +116,7 @@ public abstract class Pos : ILayoutResolver
             return base.Solve(size, refPos, refSize) + offset;
         }
 
+        /// <summary>Returns "Begin(reference)".</summary>
         public override string ToString() => $"Begin({ElementString})";
     }
     
@@ -132,6 +137,7 @@ public abstract class Pos : ILayoutResolver
             return base.Solve(size, refPos, refSize) - offset;
         }
 
+        /// <summary>Returns "End(reference)".</summary>
         public override string ToString() => $"End({ElementString})";
     }
 
@@ -152,6 +158,7 @@ public abstract class Pos : ILayoutResolver
             return refPos - size - offset;
         }
 
+        /// <summary>Returns "Before(offset, reference)".</summary>
         public override string ToString() => $"Before({offset}, {ElementString})";
     }
 
@@ -171,6 +178,7 @@ public abstract class Pos : ILayoutResolver
             return refPos + refSize + offset;
         }
 
+        /// <summary>Returns "After(offset, reference)".</summary>
         public override string ToString() => $"After({offset}, {ElementString})";
     }
 

@@ -9,7 +9,8 @@ public interface ISurface
     public int Width { get; }
     /// <summary>Gets the height of the surface in character cells.</summary>
     public int Height { get; }
-    
+
+    /// <summary>Gets the theme associated with this surface, used by drawing helpers such as <see cref="Borders"/>.</summary>
     public Theme Theme { get; }
 
     /// <summary>Writes a single character at the specified position with the given style.
@@ -97,11 +98,20 @@ public static class SurfaceExtensions
         }
     }
 
+    /// <summary>Determines whether the specified position lies within the bounds of the surface.</summary>
+    /// <param name="surface">The surface to test.</param>
+    /// <param name="x">The X coordinate to test.</param>
+    /// <param name="y">The Y coordinate to test.</param>
+    /// <returns><see langword="true"/> if the position is inside the surface; otherwise <see langword="false"/>.</returns>
     public static bool Contains(this ISurface surface, int x, int y)
     {
         return (uint)x < surface.Width && (uint)y < surface.Height;
     }
 
+    /// <summary>Draws a border around the edge of the surface, optionally with a title.</summary>
+    /// <param name="surface">The surface to draw the border on.</param>
+    /// <param name="title">An optional title written onto the top border using the theme's border renderer.</param>
+    /// <param name="thin">When <see langword="true"/>, draws thin (single-line) borders instead of thick ones.</param>
     public static void Borders(this ISurface surface, string title = "", bool thin = false)
     {
         char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
@@ -123,6 +133,8 @@ public static class SurfaceExtensions
         }
     }
 
+    /// <summary>Joins adjacent border cells into the appropriate corner and junction glyphs.</summary>
+    /// <param name="surface">The surface whose border cells are expanded in place.</param>
     public static void ExpandBorders(this ISurface surface)
     {
         surface.Theme.Borders.ExpandBorders(surface);

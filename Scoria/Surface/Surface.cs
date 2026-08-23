@@ -9,9 +9,10 @@ public sealed class Surface : ISurface
     private char[,] _glyphs;
     private Style[,] _styles;
 
-    /// <summary>Initializes a new <see cref="Surface"/> with the specified dimensions.</summary>
+    /// <summary>Initializes a new <see cref="Surface"/> with the specified dimensions and theme.</summary>
     /// <param name="width">The width of the surface in character cells.</param>
     /// <param name="height">The height of the surface in character cells.</param>
+    /// <param name="theme">The theme associated with the surface.</param>
     public Surface(int width, int height, Theme theme)
     {
         Width = width;
@@ -25,7 +26,8 @@ public sealed class Surface : ISurface
     public int Width { get; }
     /// <inheritdoc />
     public int Height { get; }
-    
+
+    /// <inheritdoc />
     public Theme Theme { get; }
 
     /// <inheritdoc />

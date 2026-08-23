@@ -1,5 +1,9 @@
 ﻿namespace Scoria;
 
+/// <summary>
+/// Default <see cref="IBorders"/> implementation. Draws box-drawing borders by joining
+/// adjacent border cells into the appropriate corner, junction, and line glyphs.
+/// </summary>
 public sealed class Borders : IBorders
 {
     private readonly char[] _borderCharacters =
@@ -16,9 +20,12 @@ public sealed class Borders : IBorders
         '┳', ' ', '┪', '╅', '╈', ' ', '┫', '╉', '╋',
     ];
     
+    /// <summary>The character used to mark thin border cells before they are expanded into glyphs.</summary>
     public static char ThinBorderCharacter { get; } = '\x1e';
+    /// <summary>The character used to mark thick border cells before they are expanded into glyphs.</summary>
     public static char ThickBorderCharacter { get; } = '\x1f';
-    
+
+    /// <inheritdoc />
     public void ExpandBorders(ISurface surface)
     {
         byte[,] values = GetValues(surface);
@@ -35,6 +42,7 @@ public sealed class Borders : IBorders
         }
     }
 
+    /// <inheritdoc />
     public void WriteTitle(ISurface surface, string title)
     {
         // TODO Handle cases where the title is too long.

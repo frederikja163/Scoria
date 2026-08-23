@@ -10,6 +10,7 @@ public abstract class Element
 {
     private readonly List<Element> _children = new List<Element>();
 
+    /// <summary>Initializes a new instance of the <see cref="Element"/> class.</summary>
     public Element()
     {
         Events = new EventRouter(this);
@@ -63,13 +64,16 @@ public abstract class Element
     /// <summary>The resolved layout values computed by the layout solver.</summary>
     protected internal CalculatedLayout CalculatedLayout { get; } = new();
 
+    /// <summary>Gets the event router used to subscribe to and dispatch events for this element.</summary>
     public EventRouter Events { get; }
 
+    /// <summary>Flags this element (and its ancestors) as needing layout recalculation.</summary>
     public virtual void SetNeedsCalculateLayout()
     {
         Parent?.SetNeedsCalculateLayout();
     }
 
+    /// <summary>Flags this element (and its ancestors) as needing to be re-rendered.</summary>
     public virtual void SetNeedsRender()
     {
         Parent?.SetNeedsRender();
@@ -171,6 +175,7 @@ public sealed class PanelElement : Element
     /// <summary>The title displayed in the panel border.</summary>
     public string Title { get; set; } = string.Empty;
 
+    /// <summary>When <see langword="true"/>, the panel is drawn with thin (single-line) borders instead of thick ones.</summary>
     public bool ThinBorders = false;
     
     /// <inheritdoc/>

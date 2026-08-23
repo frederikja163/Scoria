@@ -33,6 +33,7 @@ public sealed class SubSurface : ISurface
     /// <inheritdoc />
     public int Height { get; }
 
+    /// <inheritdoc />
     public Theme Theme { get; }
 
     /// <inheritdoc />

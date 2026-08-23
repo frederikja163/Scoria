@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using Scoria.Elements;
 
 namespace Scoria.Layout;
@@ -19,6 +19,7 @@ public abstract class Size : ILayoutResolver
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
 
+        /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
     }
 
@@ -33,6 +34,7 @@ public abstract class Size : ILayoutResolver
 
         internal override int Resolve(LayoutProperty property, List<int> dependencies) => value;
 
+        /// <summary>Returns "Absolute(value)".</summary>
         public override string ToString() => $"Absolute({value})";
     }
 
@@ -58,6 +60,7 @@ public abstract class Size : ILayoutResolver
 
         protected string ElementString => element?.ToString() ?? "Parent";
 
+        /// <summary>Returns "Relative(factor, reference)".</summary>
         public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
     }
 
@@ -77,6 +80,7 @@ public abstract class Size : ILayoutResolver
             return base.Resolve(property, dependencies) - margin;
         }
 
+        /// <summary>Returns "Fill(reference)".</summary>
         public override string ToString() => $"Fill({ElementString})";
     }
 
@@ -100,6 +104,7 @@ public abstract class Size : ILayoutResolver
             return (int)(aspectRatio * selfOtherSize);
         }
 
+        /// <summary>Returns "Aspect(ratio)".</summary>
         public override string ToString() => $"Aspect({aspectRatio.ToString(CultureInfo.InvariantCulture)})";
     }
 
@@ -138,6 +143,7 @@ public abstract class Size : ILayoutResolver
             return min == int.MaxValue || max == int.MaxValue ? 0 : max - min;
         }
 
+        /// <summary>Returns "FitChildren".</summary>
         public override string ToString() => "FitChildren";
     }
 
