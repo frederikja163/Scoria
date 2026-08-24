@@ -443,6 +443,38 @@ public class PosTests
     }
 
     [Test]
+    public void Operator_Add_SizeToPos_DisplacesPosition()
+    {
+        Assert.That((Pos.Abs(3) + Size.Abs(4)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(7));
+        Assert.That((Size.Abs(3) + Pos.Abs(4)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(7));
+    }
+
+    [Test]
+    public void Operator_Add_SizeToRelativePos_CombinesResolvedValues()
+    {
+        Element reference = NewElement();
+
+        // Begin resolves to the reference's start (50); Size.Relative(0.5) adds half of the reference width (15).
+        Pos pos = Pos.Begin(element: reference) + Size.Relative(0.5f, reference);
+
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [20, 50, 30, 30]), Is.EqualTo(65));
+    }
+
+    [Test]
+    public void Operator_Subtract_SizeFromPos_DisplacesPosition()
+    {
+        Assert.That((Pos.Abs(10) - Size.Abs(3)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(7));
+    }
+
+    [Test]
+    public void Operator_Int_Literals_RemainUnambiguous()
+    {
+        Assert.That((Pos.Abs(5) + 3).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
+        Assert.That((3 + Pos.Abs(5)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
+        Assert.That((Pos.Center() + 2).ToString(), Is.EqualTo("(Center(Parent) + Absolute(2))"));
+    }
+
+    [Test]
     public void Operator_GetDependencies_ConcatenatesOperandDependencies()
     {
         Element self = NewElement();

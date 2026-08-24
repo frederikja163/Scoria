@@ -404,6 +404,13 @@ public class SizeTests
     }
 
     [Test]
+    public void Operator_Int_Literals_RemainUnambiguous()
+    {
+        Assert.That((Size.Abs(5) + 3).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(8));
+        Assert.That((3 + Size.Abs(5)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(8));
+    }
+
+    [Test]
     public void Implicit_Int_ConvertsToAbsoluteSize()
     {
         Size size = 5;

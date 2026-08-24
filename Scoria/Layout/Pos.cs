@@ -194,7 +194,7 @@ public abstract class Pos : ILayoutResolver
     /// </param>
     public static Pos After(int offset = 0, Element? element = null) => new AfterPos(offset, element);
 
-    private sealed class CombinedPos(Pos left, Pos right, Func<int, int, int> combine, string op) : Pos
+    private sealed class CombinedPos(ILayoutResolver left, ILayoutResolver right, Func<int, int, int> combine, string op) : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
@@ -225,6 +225,39 @@ public abstract class Pos : ILayoutResolver
 
     /// <summary>Combines two positions by dividing their resolved values.</summary>
     public static Pos operator /(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a / b, "/");
+
+    /// <summary>
+    /// Displaces a position by an offset along the same axis.
+    /// </summary>
+    /// <param name="position">The position to displace.</param>
+    /// <param name="offset">The size to shift the position by.</param>
+    public static Pos operator +(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a + b, "+");
+
+    /// <summary>
+    /// Displaces a position by an offset along the same axis. The sum is commutative.
+    /// </summary>
+    /// <param name="offset">The size to shift the position by.</param>
+    /// <param name="position">The position to displace.</param>
+    public static Pos operator +(Size offset, Pos position) => new CombinedPos(offset, position, static (a, b) => a + b, "+");
+
+    /// <summary>
+    /// Displaces a position backwards by an offset along the same axis.
+    /// </summary>
+    /// <param name="position">The position to displace.</param>
+    /// <param name="offset">The size to shift the position by.</param>
+    public static Pos operator -(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a - b, "-");
+
+    // The scalar overloads below exist so integer literals stay unambiguous when mixed with
+    // Pos and Size operands (both have implicit conversions from int).
+
+    /// <summary>Displaces a position by a fixed offset in characters.</summary>
+    public static Pos operator +(Pos position, int offset) => position + Size.Abs(offset);
+
+    /// <summary>Displaces a position by a fixed offset in characters.</summary>
+    public static Pos operator +(int offset, Pos position) => position + Size.Abs(offset);
+
+    /// <summary>Displaces a position backwards by a fixed offset in characters.</summary>
+    public static Pos operator -(Pos position, int offset) => position - Size.Abs(offset);
 
     /// <summary>
     /// Implicitly converts an integer to an absolute position.

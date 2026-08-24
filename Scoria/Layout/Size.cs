@@ -189,6 +189,15 @@ public abstract class Size : ILayoutResolver
     /// <summary>Combines two sizes by dividing their resolved values.</summary>
     public static Size operator /(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a / b, "/");
 
+    // The scalar overloads below exist so integer literals stay unambiguous when mixed with
+    // Pos and Size operands (both have implicit conversions from int).
+
+    /// <summary>Adds a fixed offset in characters to a size.</summary>
+    public static Size operator +(Size size, int offset) => size + Size.Abs(offset);
+
+    /// <summary>Adds a fixed offset in characters to a size.</summary>
+    public static Size operator +(int offset, Size size) => Size.Abs(offset) + size;
+
     /// <summary>
     /// Implicitly converts an integer to an absolute size.
     /// </summary>
