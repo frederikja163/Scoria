@@ -43,19 +43,27 @@ public class PosTests
     }
 
     [Test]
-    public void Auto_GetDependencies_ReturnsElementAutoLayoutDependencies()
+    public void Auto_GetDependencies_UsesElementDefault()
     {
+        Element parent = NewElement();
         Element self = NewElement();
+        parent.AddChild(self);
 
         List<LayoutProperty> dependencies = Pos.Auto().GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
 
-        Assert.That(dependencies, Is.Empty);
+        Assert.That(dependencies, Is.EqualTo(new[]
+        {
+            new LayoutProperty(LayoutPropertyType.Width, self),
+            new LayoutProperty(LayoutPropertyType.X, parent),
+            new LayoutProperty(LayoutPropertyType.Width, parent),
+        }));
     }
 
     [Test]
-    public void Auto_Resolve_ReturnsElementAutoLayoutValue()
+    public void Auto_Resolve_UsesElementDefault()
     {
-        Assert.That(Pos.Auto().Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(0));
+        // Element's default for X is Pos.Center(): centers a 20-wide element within a 100-wide reference at position 0.
+        Assert.That(Pos.Auto().Resolve(Prop(LayoutPropertyType.X), [20, 0, 100]), Is.EqualTo(40));
     }
 
     [Test]
@@ -295,10 +303,10 @@ public class PosTests
         LayoutSolver solver = BuildSolver(parent);
         solver.Solve();
 
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, child)), Is.EqualTo(11));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, child)), Is.EqualTo(22));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Width, child)), Is.EqualTo(33));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Height, child)), Is.EqualTo(44));
+        Assert.That(child.CalculatedLayout.X, Is.EqualTo(11));
+        Assert.That(child.CalculatedLayout.Y, Is.EqualTo(22));
+        Assert.That(child.CalculatedLayout.Width, Is.EqualTo(33));
+        Assert.That(child.CalculatedLayout.Height, Is.EqualTo(44));
     }
 
     [Test]
@@ -315,8 +323,8 @@ public class PosTests
         LayoutSolver solver = BuildSolver(parent);
         solver.Solve();
 
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, child)), Is.EqualTo(40));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, child)), Is.EqualTo(35));
+        Assert.That(child.CalculatedLayout.X, Is.EqualTo(40));
+        Assert.That(child.CalculatedLayout.Y, Is.EqualTo(35));
     }
 
     [Test]
@@ -341,8 +349,8 @@ public class PosTests
         LayoutSolver solver = BuildSolver(parent);
         solver.Solve();
 
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, child)), Is.EqualTo(63));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, child)), Is.EqualTo(18));
+        Assert.That(child.CalculatedLayout.X, Is.EqualTo(63));
+        Assert.That(child.CalculatedLayout.Y, Is.EqualTo(18));
     }
 
     [Test]
@@ -367,8 +375,8 @@ public class PosTests
         LayoutSolver solver = BuildSolver(parent);
         solver.Solve();
 
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, child)), Is.EqualTo(46));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, child)), Is.EqualTo(30));
+        Assert.That(child.CalculatedLayout.X, Is.EqualTo(46));
+        Assert.That(child.CalculatedLayout.Y, Is.EqualTo(30));
     }
 
     [Test]
@@ -400,10 +408,10 @@ public class PosTests
         LayoutSolver solver = BuildSolver(parent);
         solver.Solve();
 
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, beginChild)), Is.EqualTo(50));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, beginChild)), Is.EqualTo(26));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.X, endChild)), Is.EqualTo(76));
-        Assert.That(solver.GetValue(new LayoutProperty(LayoutPropertyType.Y, endChild)), Is.EqualTo(10));
+        Assert.That(beginChild.CalculatedLayout.X, Is.EqualTo(50));
+        Assert.That(beginChild.CalculatedLayout.Y, Is.EqualTo(26));
+        Assert.That(endChild.CalculatedLayout.X, Is.EqualTo(76));
+        Assert.That(endChild.CalculatedLayout.Y, Is.EqualTo(10));
     }
 
     [Test]

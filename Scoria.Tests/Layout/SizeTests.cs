@@ -41,19 +41,22 @@ public class SizeTests
     }
 
     [Test]
-    public void Auto_GetDependencies_ReturnsElementAutoLayoutDependencies()
+    public void Auto_GetDependencies_UsesElementDefault()
     {
+        Element parent = NewElement();
         Element self = NewElement();
+        parent.AddChild(self);
 
         List<LayoutProperty> dependencies = Size.Auto().GetDependencies(new LayoutProperty(LayoutPropertyType.Width, self));
 
-        Assert.That(dependencies, Is.Empty);
+        Assert.That(dependencies, Is.EqualTo(new[] { new LayoutProperty(LayoutPropertyType.Width, parent) }));
     }
 
     [Test]
-    public void Auto_Resolve_ReturnsElementAutoLayoutValue()
+    public void Auto_Resolve_UsesElementDefault()
     {
-        Assert.That(Size.Auto().Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(0));
+        // Element's default for Width is Size.Fill(): matches the reference size.
+        Assert.That(Size.Auto().Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(100));
     }
 
     [Test]

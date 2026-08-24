@@ -34,4 +34,14 @@ public sealed class CalculatedLayout
                 throw new ArgumentOutOfRangeException();
         }
     }
+
+    internal int GetProperty(LayoutPropertyType layoutPropertyType) =>
+        layoutPropertyType switch
+        {
+            LayoutPropertyType.X => X,
+            LayoutPropertyType.Y => Y,
+            LayoutPropertyType.Width => Width,
+            LayoutPropertyType.Height => Height,
+            _ => throw new ArgumentOutOfRangeException()
+        };
 }

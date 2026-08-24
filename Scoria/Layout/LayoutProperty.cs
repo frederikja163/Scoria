@@ -29,6 +29,16 @@ internal interface ILayoutResolver
 /// </summary>
 public sealed record LayoutProperty(LayoutPropertyType Type, Element Element)
 {
+    internal void SetValue(int value)
+    {
+        Element.CalculatedLayout.SetProperty(Type, value);
+    }
+
+    internal int GetValue()
+    {
+        return Element.CalculatedLayout.GetProperty(Type);
+    }
+    
     internal ILayoutResolver GetProperty() => Type switch
     {
         LayoutPropertyType.X => Element.X,

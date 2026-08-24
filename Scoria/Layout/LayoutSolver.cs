@@ -10,7 +10,6 @@ internal sealed class LayoutSolver
 {
     private readonly List<LayoutProperty> _topologicalOrder;
     private readonly DependencyMap _dependencies;
-    private readonly Dictionary<LayoutProperty, int> _solvedValues = [];
 
     internal LayoutSolver(List<LayoutProperty> topologicalOrder, DependencyMap dependencies)
     {
@@ -18,30 +17,13 @@ internal sealed class LayoutSolver
         _dependencies = dependencies;
     }
 
-    internal int GetValue(LayoutProperty layoutProperty)
-    {
-        if (_solvedValues.TryGetValue(layoutProperty, out int value))
-        {
-            return value;
-        }
-
-        throw new LayoutException("Layouts cannot reference properties from another viewport.");
-    }
-
     internal void Solve()
     {
         foreach (LayoutProperty property in _topologicalOrder)
         {
             ILayoutResolver resolver = property.GetProperty();
-            _solvedValues[property] = resolver.Resolve(property, _dependencies[property].Select(GetValue).ToList());
-        }
-    }
-
-    internal void PopulateProperties()
-    {
-        foreach ((LayoutProperty reference, int value) in _solvedValues)
-        {
-            reference.Element.CalculatedLayout.SetProperty(reference.Type, value);
+            int value = resolver.Resolve(property, _dependencies[property].Select(p => p.GetValue()).ToList());
+            property.SetValue(value);
         }
     }
 
@@ -62,7 +44,6 @@ internal sealed class LayoutSolver
         List<LayoutProperty> topologicalOrder = TopologicalSort(emptyQueue, dependencyEdges, dependentEdges);
         LayoutSolver layoutSolver = new LayoutSolver(topologicalOrder, dependencies);
         layoutSolver.Solve();
-        layoutSolver.PopulateProperties();
         
         void AddEdges(LayoutProperty source)
         {
