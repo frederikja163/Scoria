@@ -62,8 +62,12 @@ public class PosTests
     [Test]
     public void Auto_Resolve_UsesElementDefault()
     {
+        Element parent = NewElement();
+        Element self = NewElement();
+        parent.AddChild(self);
+
         // Element's default for X is Pos.Center(): centers a 20-wide element within a 100-wide reference at position 0.
-        Assert.That(Pos.Auto().Resolve(Prop(LayoutPropertyType.X), [20, 0, 100]), Is.EqualTo(40));
+        Assert.That(Pos.Auto().Resolve(new LayoutProperty(LayoutPropertyType.X, self), [20, 0, 100]), Is.EqualTo(40));
     }
 
     [Test]
@@ -412,6 +416,126 @@ public class PosTests
         Assert.That(beginChild.CalculatedLayout.Y, Is.EqualTo(26));
         Assert.That(endChild.CalculatedLayout.X, Is.EqualTo(76));
         Assert.That(endChild.CalculatedLayout.Y, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void Operator_Add_CombinesResolvedValues()
+    {
+        Assert.That((Pos.Abs(5) + Pos.Abs(3)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
+    }
+
+    [Test]
+    public void Operator_Subtract_CombinesResolvedValues()
+    {
+        Assert.That((Pos.Abs(10) - Pos.Abs(4)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(6));
+    }
+
+    [Test]
+    public void Operator_Multiply_CombinesResolvedValues()
+    {
+        Assert.That((Pos.Abs(4) * Pos.Abs(3)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(12));
+    }
+
+    [Test]
+    public void Operator_Divide_CombinesResolvedValues()
+    {
+        Assert.That((Pos.Abs(7) / Pos.Abs(2)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void Operator_GetDependencies_ConcatenatesOperandDependencies()
+    {
+        Element self = NewElement();
+        Element reference = NewElement();
+
+        Pos pos = Pos.Relative(0.5f, reference) + Pos.Relative(0.25f, reference);
+        List<LayoutProperty> dependencies = pos.GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
+
+        Assert.That(dependencies, Is.EqualTo(new[]
+        {
+            new LayoutProperty(LayoutPropertyType.Width, self),
+            new LayoutProperty(LayoutPropertyType.X, reference),
+            new LayoutProperty(LayoutPropertyType.Width, reference),
+            new LayoutProperty(LayoutPropertyType.Width, self),
+            new LayoutProperty(LayoutPropertyType.X, reference),
+            new LayoutProperty(LayoutPropertyType.Width, reference),
+        }));
+    }
+
+    [Test]
+    public void Operator_Resolve_SplitsDependenciesPerOperand()
+    {
+        Element reference = NewElement();
+        Pos pos = Pos.Relative(0.5f, reference) + Pos.Relative(0.25f, reference);
+
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [20, 50, 30, 20, 50, 30]), Is.EqualTo(107));
+    }
+
+    [Test]
+    public void Operator_Add_AbsoluteAndRelative_CombinesResolvedValues()
+    {
+        Element self = NewElement();
+        Element reference = NewElement();
+        Pos pos = (Pos.Begin(element: reference) + Pos.Abs(3)) * 2;
+
+        Assert.That(pos.Resolve(new LayoutProperty(LayoutPropertyType.X, self), [20, 50, 30]), Is.EqualTo(106));
+    }
+
+    [Test]
+    public void Implicit_Int_ConvertsToAbsolutePosition()
+    {
+        Pos pos = 5;
+
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Implicit_Int_InExpressions_ResolvesAsAbsolute()
+    {
+        Assert.That((Pos.Abs(5) + 3).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
+        Assert.That((2 * Pos.Abs(5)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(10));
+    }
+
+    [Test]
+    public void Implicit_Float_ConvertsToRelativePosition()
+    {
+        Pos pos = 0.5f;
+
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(55));
+    }
+
+    [Test]
+    public void Implicit_Double_ConvertsToRelativePosition()
+    {
+        Pos pos = 0.5;
+
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(55));
+    }
+
+    [Test]
+    public void ToString_Combined_ReturnsParenthesizedExpression()
+    {
+        Assert.That((Pos.Abs(5) + Pos.Abs(3)).ToString(), Is.EqualTo("(Absolute(5) + Absolute(3))"));
+    }
+
+    [Test]
+    public void Solve_CombinedPositions_ResolveToCombinedValues()
+    {
+        Element parent = NewElement(width: 100, height: 80);
+        Element child = NewElement();
+        parent.AddChild(child);
+        child.X = Pos.Abs(10) + Pos.Abs(5);
+        child.Y = Pos.Center() + 2;
+        child.Width = Size.Abs(2) * Size.Abs(3);
+        child.Height = Size.Abs(2) + Size.Abs(4);
+
+        LayoutSolver solver = BuildSolver(parent);
+        solver.Solve();
+
+        Assert.That(child.CalculatedLayout.X, Is.EqualTo(15));
+        Assert.That(child.CalculatedLayout.Y, Is.EqualTo(39));
+        Assert.That(child.CalculatedLayout.Width, Is.EqualTo(6));
+        Assert.That(child.CalculatedLayout.Height, Is.EqualTo(6));
     }
 
     [Test]

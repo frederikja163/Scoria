@@ -10,15 +10,17 @@ public abstract class Pos : ILayoutResolver
 {
     List<LayoutProperty> ILayoutResolver.GetDependencies(LayoutProperty property) => GetDependencies(property);
     internal abstract List<LayoutProperty> GetDependencies(LayoutProperty property);
-    int ILayoutResolver.Resolve(LayoutProperty property, List<int> dependencies) => Resolve(property, dependencies);
-    internal abstract int Resolve(LayoutProperty property, List<int> dependencies);
+    int ILayoutResolver.Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => Resolve(property, ref dependencies);
+    internal int Resolve(LayoutProperty property, ReadOnlySpan<int> dependencies) => Resolve(property, ref dependencies);
 
+    internal abstract int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies);
 
     private sealed class AutoPos() : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+            => property.Element.ResolveAutoLayout(property.Type, ref dependencies);
 
         /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
@@ -32,7 +34,7 @@ public abstract class Pos : ILayoutResolver
     private sealed class AbsolutePos(int value) : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => [];
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => value;
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => value;
 
         /// <summary>Returns "Absolute(value)".</summary>
         public override string ToString() => $"Absolute({value})";
@@ -58,11 +60,12 @@ public abstract class Pos : ILayoutResolver
             ];
         }
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
         {
             int size = dependencies[0];
             int refPos = dependencies[1];
             int refSize = dependencies[2];
+            dependencies = dependencies[3..];
             return Solve(size, refPos, refSize);
         }
 
@@ -190,4 +193,54 @@ public abstract class Pos : ILayoutResolver
     /// The element to position after. If <see langword="null"/>, the parent element is used.
     /// </param>
     public static Pos After(int offset = 0, Element? element = null) => new AfterPos(offset, element);
+
+    private sealed class CombinedPos(Pos left, Pos right, Func<int, int, int> combine, string op) : Pos
+    {
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
+        {
+            List<LayoutProperty> dependencies = left.GetDependencies(property);
+            dependencies.AddRange(right.GetDependencies(property));
+            return dependencies;
+        }
+
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+        {
+            int leftValue = left.Resolve(property, ref dependencies);
+            int rightValue = right.Resolve(property, ref dependencies);
+            return combine(leftValue, rightValue);
+        }
+
+        /// <summary>Returns a string representation of the combined position expression.</summary>
+        public override string ToString() => $"({left} {op} {right})";
+    }
+
+    /// <summary>Combines two positions by adding their resolved values.</summary>
+    public static Pos operator +(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a + b, "+");
+
+    /// <summary>Combines two positions by subtracting their resolved values.</summary>
+    public static Pos operator -(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a - b, "-");
+
+    /// <summary>Combines two positions by multiplying their resolved values.</summary>
+    public static Pos operator *(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a * b, "*");
+
+    /// <summary>Combines two positions by dividing their resolved values.</summary>
+    public static Pos operator /(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a / b, "/");
+
+    /// <summary>
+    /// Implicitly converts an integer to an absolute position.
+    /// </summary>
+    /// <param name="value">The fixed offset in characters.</param>
+    public static implicit operator Pos(int value) => Abs(value);
+
+    /// <summary>
+    /// Implicitly converts a float to a relative position.
+    /// </summary>
+    /// <param name="factor">The interpolation factor to use.</param>
+    public static implicit operator Pos(float factor) => Relative(factor);
+
+    /// <summary>
+    /// Implicitly converts a double to a relative position.
+    /// </summary>
+    /// <param name="factor">The interpolation factor to use.</param>
+    public static implicit operator Pos(double factor) => Relative((float)factor);
 }

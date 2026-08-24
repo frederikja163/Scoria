@@ -55,8 +55,12 @@ public class SizeTests
     [Test]
     public void Auto_Resolve_UsesElementDefault()
     {
+        Element parent = NewElement();
+        Element self = NewElement();
+        parent.AddChild(self);
+
         // Element's default for Width is Size.Fill(): matches the reference size.
-        Assert.That(Size.Auto().Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(100));
+        Assert.That(Size.Auto().Resolve(new LayoutProperty(LayoutPropertyType.Width, self), [100]), Is.EqualTo(100));
     }
 
     [Test]
@@ -233,34 +237,49 @@ public class SizeTests
     [Test]
     public void FitChildren_Resolve_ComputesBoundingBox()
     {
+        Element parent = NewElement();
+        parent.AddChild(NewElement());
+        parent.AddChild(NewElement());
+
         // child0: pos=10, size=5 → spans [10, 15]
         // child1: pos=3, size=8 → spans [3, 11]
         // bounding box: min=3, max=15 → 15-3 = 12
-        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [10, 5, 3, 8]), Is.EqualTo(12));
+        Assert.That(Size.FitChildren().Resolve(new LayoutProperty(LayoutPropertyType.Width, parent), [10, 5, 3, 8]), Is.EqualTo(12));
     }
 
     [Test]
     public void FitChildren_Resolve_StackedChildren_ReturnsSameAsSum()
     {
+        Element parent = NewElement();
+        parent.AddChild(NewElement());
+        parent.AddChild(NewElement());
+
         // child0: pos=0, size=10 → spans [0, 10]
         // child1: pos=10, size=20 → spans [10, 30]
         // bounding box: min=0, max=30 → 30
-        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [0, 10, 10, 20]), Is.EqualTo(30));
+        Assert.That(Size.FitChildren().Resolve(new LayoutProperty(LayoutPropertyType.Width, parent), [0, 10, 10, 20]), Is.EqualTo(30));
     }
 
     [Test]
     public void FitChildren_Resolve_OverlappingChildren_ReturnsUnionExtent()
     {
+        Element parent = NewElement();
+        parent.AddChild(NewElement());
+        parent.AddChild(NewElement());
+
         // child0: pos=0, size=15 → spans [0, 15]
         // child1: pos=5, size=15 → spans [5, 20]
         // bounding box: min=0, max=20 → 20
-        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [0, 15, 5, 15]), Is.EqualTo(20));
+        Assert.That(Size.FitChildren().Resolve(new LayoutProperty(LayoutPropertyType.Width, parent), [0, 15, 5, 15]), Is.EqualTo(20));
     }
 
     [Test]
     public void FitChildren_Resolve_SingleChild_ReturnsChildSize()
     {
-        Assert.That(Size.FitChildren().Resolve(Prop(LayoutPropertyType.Width), [7, 12]), Is.EqualTo(12));
+        Element parent = NewElement();
+        parent.AddChild(NewElement());
+
+        Assert.That(Size.FitChildren().Resolve(new LayoutProperty(LayoutPropertyType.Width, parent), [7, 12]), Is.EqualTo(12));
     }
 
     [Test]
@@ -309,6 +328,122 @@ public class SizeTests
     public void ToString_FitChildren_ReturnsFitChildren()
     {
         Assert.That(Size.FitChildren().ToString(), Is.EqualTo("FitChildren"));
+    }
+
+    [Test]
+    public void Operator_Add_CombinesResolvedValues()
+    {
+        Assert.That((Size.Abs(5) + Size.Abs(3)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(8));
+    }
+
+    [Test]
+    public void Operator_Subtract_CombinesResolvedValues()
+    {
+        Assert.That((Size.Abs(10) - Size.Abs(4)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(6));
+    }
+
+    [Test]
+    public void Operator_Multiply_CombinesResolvedValues()
+    {
+        Assert.That((Size.Abs(4) * Size.Abs(3)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(12));
+    }
+
+    [Test]
+    public void Operator_Divide_CombinesResolvedValues()
+    {
+        Assert.That((Size.Abs(7) / Size.Abs(2)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void Operator_GetDependencies_ConcatenatesOperandDependencies()
+    {
+        Element self = NewElement();
+        Element reference = NewElement();
+
+        List<LayoutProperty> dependencies = (Size.Relative(0.5f, reference) + Size.Relative(0.25f, reference))
+            .GetDependencies(new LayoutProperty(LayoutPropertyType.Width, self));
+
+        Assert.That(dependencies, Is.EqualTo(new[]
+        {
+            new LayoutProperty(LayoutPropertyType.Width, reference),
+            new LayoutProperty(LayoutPropertyType.Width, reference),
+        }));
+    }
+
+    [Test]
+    public void Operator_Resolve_SplitsDependenciesPerOperand()
+    {
+        Element reference = NewElement();
+        Size size = Size.Relative(0.5f, reference) + Size.Relative(0.25f, reference);
+
+        Assert.That(size.Resolve(Prop(LayoutPropertyType.Width), [100, 200]), Is.EqualTo(100));
+    }
+
+    [Test]
+    public void Operator_Add_AbsoluteAndRelative_CombinesResolvedValues()
+    {
+        Element reference = NewElement();
+
+        Assert.That((Size.Abs(5) + Size.Relative(0.5f, reference)).Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(55));
+    }
+
+    [Test]
+    public void Operator_Expression_FitChildrenTimesDoublePlusInt_Resolves()
+    {
+        Element grandparent = NewElement();
+        Element self = NewElement();
+        grandparent.AddChild(self);
+        self.AddChild(NewElement());
+        self.AddChild(NewElement());
+
+        Size size = Size.FitChildren() * 2.0 + 5;
+
+        // FitChildren() resolves to 12 from [10, 5, 3, 8]; 2.0 resolves to 200 from the parent width 100.
+        Assert.That(size.Resolve(new LayoutProperty(LayoutPropertyType.Width, self), [10, 5, 3, 8, 100]), Is.EqualTo(2405));
+        Assert.That(size.ToString(), Is.EqualTo("((FitChildren * Relative(2, Parent)) + Absolute(5))"));
+    }
+
+    [Test]
+    public void Implicit_Int_ConvertsToAbsoluteSize()
+    {
+        Size size = 5;
+
+        Assert.That(size.Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Implicit_Int_InExpressions_ResolvesAsAbsolute()
+    {
+        Assert.That((Size.Abs(5) + 3).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(8));
+        Assert.That((2 * Size.Abs(5)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(10));
+    }
+
+    [Test]
+    public void Implicit_Float_ConvertsToRelativeSize()
+    {
+        Size size = 0.5f;
+
+        Assert.That(size.Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(50));
+    }
+
+    [Test]
+    public void Implicit_Double_ConvertsToRelativeSize()
+    {
+        Size size = 0.5;
+
+        Assert.That(size.Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(50));
+    }
+
+    [Test]
+    public void ToString_Combined_ReturnsParenthesizedExpression()
+    {
+        Assert.That((Size.Abs(5) + Size.Abs(3)).ToString(), Is.EqualTo("(Absolute(5) + Absolute(3))"));
+    }
+
+    [Test]
+    public void ToString_Combined_WithImplicitInt()
+    {
+        Assert.That((Size.Abs(10) - 3).ToString(), Is.EqualTo("(Absolute(10) - Absolute(3))"));
     }
 
     private static Element NewElement()

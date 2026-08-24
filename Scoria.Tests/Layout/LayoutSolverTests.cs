@@ -221,13 +221,13 @@ public class LayoutSolverTests
     {
         public List<LayoutProperty> References { get; } = [];
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => References;
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => 0;
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => 0;
     }
 
     private sealed class TestSize : Size
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => [];
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => 0;
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => 0;
     }
 
     private static Element NewElement()

@@ -21,7 +21,7 @@ internal interface ILayoutResolver
 {
     internal List<LayoutProperty> GetDependencies(LayoutProperty layoutProperty);
 
-    internal int Resolve(LayoutProperty layoutProperty, List<int> dependencies);
+    internal int Resolve(LayoutProperty layoutProperty, ref ReadOnlySpan<int> dependencies);
 }
 
 /// <summary>

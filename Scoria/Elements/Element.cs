@@ -164,9 +164,9 @@ public abstract class Element
         return GetDefaultLayoutResolver(type).GetDependencies(new LayoutProperty(type, this));
     }
 
-    protected internal virtual int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
+    protected internal virtual int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
     {
-        return GetDefaultLayoutResolver(type).Resolve(new LayoutProperty(type, this), dependencies);
+        return GetDefaultLayoutResolver(type).Resolve(new LayoutProperty(type, this), ref dependencies);
     }
 
     private ILayoutResolver GetDefaultLayoutResolver(LayoutPropertyType propertyType) => propertyType switch
@@ -228,13 +228,18 @@ public sealed class TextElement : Element
         return [];
     }
 
-    protected internal override int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
+    protected internal override int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
     {
         if (type == LayoutPropertyType.Width)
-            return int.Min(dependencies[0], Text.Length);
+        {
+            int value = int.Min(dependencies[0], Text.Length);
+            dependencies = dependencies[1..];
+            return value;
+        }
         if (type == LayoutPropertyType.Height)
         {
             int width = dependencies[0];
+            dependencies = dependencies[1..];
             // Integer division with rounding up.
             return (Text.Length + width - 1) / width;
         }

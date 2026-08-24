@@ -22,7 +22,8 @@ internal sealed class LayoutSolver
         foreach (LayoutProperty property in _topologicalOrder)
         {
             ILayoutResolver resolver = property.GetProperty();
-            int value = resolver.Resolve(property, _dependencies[property].Select(p => p.GetValue()).ToList());
+            ReadOnlySpan<int> dependencies = _dependencies[property].Select(p => p.GetValue()).ToArray();
+            int value = resolver.Resolve(property, ref dependencies);
             property.SetValue(value);
         }
     }

@@ -10,14 +10,17 @@ public abstract class Size : ILayoutResolver
 {
     List<LayoutProperty> ILayoutResolver.GetDependencies(LayoutProperty property) => GetDependencies(property);
     internal abstract List<LayoutProperty> GetDependencies(LayoutProperty property);
-    int ILayoutResolver.Resolve(LayoutProperty property, List<int> dependencies) => Resolve(property, dependencies);
-    internal abstract int Resolve(LayoutProperty property, List<int> dependencies);
+    int ILayoutResolver.Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => Resolve(property, ref dependencies);
+    internal int Resolve(LayoutProperty property, ReadOnlySpan<int> dependencies) => Resolve(property, ref dependencies);
+
+    internal abstract int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies);
 
     private sealed class AutoSize() : Size
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => property.Element.ResolveAutoLayout(property.Type, dependencies);
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+            => property.Element.ResolveAutoLayout(property.Type, ref dependencies);
 
         /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
@@ -32,7 +35,7 @@ public abstract class Size : ILayoutResolver
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => [];
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies) => value;
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies) => value;
 
         /// <summary>Returns "Absolute(value)".</summary>
         public override string ToString() => $"Absolute({value})";
@@ -52,9 +55,10 @@ public abstract class Size : ILayoutResolver
                 throw new LayoutException("Relative size must either specify an element or have a parent element.") }
         ];
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
         {
             int refSize = dependencies[0];
+            dependencies = dependencies[1..];
             return (int)(factor * refSize);
         }
 
@@ -75,9 +79,9 @@ public abstract class Size : ILayoutResolver
 
     private sealed class FillSize(int margin, Element? element) : RelativeSize(1, element)
     {
-        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
         {
-            return base.Resolve(property, dependencies) - margin;
+            return base.Resolve(property, ref dependencies) - margin;
         }
 
         /// <summary>Returns "Fill(reference)".</summary>
@@ -98,9 +102,10 @@ public abstract class Size : ILayoutResolver
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) =>
             [property with { Type = property.Type.OtherAxis() }];
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
         {
             int selfOtherSize = dependencies[0];
+            dependencies = dependencies[1..];
             return (int)(aspectRatio * selfOtherSize);
         }
 
@@ -128,19 +133,19 @@ public abstract class Size : ILayoutResolver
             return properties;
         }
 
-        internal override int Resolve(LayoutProperty property, List<int> dependencies)
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
         {
-            if (dependencies.Count == 0) return 0;
             int min = int.MaxValue;
             int max = int.MinValue;
-            for (int i = 0; i < dependencies.Count; i++)
+            foreach (Element child in property.Element.GetChildren())
             {
-                int pos = dependencies[i++];
-                int size = dependencies[i];
+                int pos = dependencies[0];
+                int size = dependencies[1];
+                dependencies = dependencies[2..];
                 min = int.Min(pos, min);
                 max = int.Max(pos + size, max);
             }
-            return min == int.MaxValue || max == int.MaxValue ? 0 : max - min;
+            return min == int.MaxValue || max == int.MinValue ? 0 : max - min;
         }
 
         /// <summary>Returns "FitChildren".</summary>
@@ -151,4 +156,54 @@ public abstract class Size : ILayoutResolver
     /// Creates a size equal to the bounding box of all direct children along this axis.
     /// </summary>
     public static Size FitChildren() => new FitChildrenSize();
+
+    private sealed class CombinedSize(Size left, Size right, Func<int, int, int> combine, string op) : Size
+    {
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
+        {
+            List<LayoutProperty> dependencies = left.GetDependencies(property);
+            dependencies.AddRange(right.GetDependencies(property));
+            return dependencies;
+        }
+
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+        {
+            int leftValue = left.Resolve(property, ref dependencies);
+            int rightValue = right.Resolve(property, ref dependencies);
+            return combine(leftValue, rightValue);
+        }
+
+        /// <summary>Returns a string representation of the combined size expression.</summary>
+        public override string ToString() => $"({left} {op} {right})";
+    }
+
+    /// <summary>Combines two sizes by adding their resolved values.</summary>
+    public static Size operator +(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a + b, "+");
+
+    /// <summary>Combines two sizes by subtracting their resolved values.</summary>
+    public static Size operator -(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a - b, "-");
+
+    /// <summary>Combines two sizes by multiplying their resolved values.</summary>
+    public static Size operator *(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a * b, "*");
+
+    /// <summary>Combines two sizes by dividing their resolved values.</summary>
+    public static Size operator /(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a / b, "/");
+
+    /// <summary>
+    /// Implicitly converts an integer to an absolute size.
+    /// </summary>
+    /// <param name="value">The fixed size in characters.</param>
+    public static implicit operator Size(int value) => Abs(value);
+
+    /// <summary>
+    /// Implicitly converts a float to a relative size.
+    /// </summary>
+    /// <param name="factor">The fraction of the reference size to use.</param>
+    public static implicit operator Size(float factor) => Relative(factor);
+
+    /// <summary>
+    /// Implicitly converts a double to a relative size.
+    /// </summary>
+    /// <param name="factor">The fraction of the reference size to use.</param>
+    public static implicit operator Size(double factor) => Relative((float)factor);
 }
