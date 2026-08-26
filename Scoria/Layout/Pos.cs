@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Scoria.Elements;
 
 namespace Scoria.Layout;
@@ -17,10 +18,10 @@ public abstract class Pos : ILayoutResolver
 
     private sealed class AutoPos() : Pos
     {
-        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element!.ResolveAutoLayoutDependencies(property.Type);
 
         internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
-            => property.Element.ResolveAutoLayout(property.Type, ref dependencies);
+            => property.Element!.ResolveAutoLayout(property.Type, ref dependencies);
 
         /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
@@ -46,12 +47,12 @@ public abstract class Pos : ILayoutResolver
     /// <param name="value">The fixed offset in characters.</param>
     public static Pos Abs(int value) => new AbsolutePos(value);
 
-    private abstract class RelativeBase(Element? element) : Pos
+    private sealed class RelativePos(float factor, Element? element, string func = "Relative") : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
-            Element reference = element ?? property.Element.Parent ??
-                throw new LayoutException("Relative position must either specify an element or have a parent element.");
+            Element reference = element ?? property.Element?.Parent ??
+                throw new LayoutException($"Pos.{func} must either specify an element or have a parent element.");
             return
             [
                 property with { Type = property.Type.SameAxisSize() },
@@ -66,23 +67,11 @@ public abstract class Pos : ILayoutResolver
             int refPos = dependencies[1];
             int refSize = dependencies[2];
             dependencies = dependencies[3..];
-            return Solve(size, refPos, refSize);
-        }
-
-        protected abstract int Solve(int size, int refPos, int refSize);
-
-        protected string ElementString => element?.ToString() ?? "Parent";
-    }
-
-    private class RelativePos(float factor, Element? element) : RelativeBase(element)
-    {
-        protected override int Solve(int size, int refPos, int refSize)
-        {
             return (int)((refSize - size) * factor) + refPos;
         }
 
-        /// <summary>Returns "Relative(factor, reference)".</summary>
-        public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
+        /// <summary>Returns "{func}(factor, reference)".</summary>
+        public override string ToString() => $"{func}({factor.ToString(CultureInfo.InvariantCulture)}, {element?.ToString() ?? "Parent"})";
     }
     
     /// <summary>
@@ -96,12 +85,6 @@ public abstract class Pos : ILayoutResolver
     /// The element to position relative to. If <see langword="null"/>, the parent element is used.
     /// </param>
     public static Pos Relative(float factor, Element? element = null) => new RelativePos(factor, element);
-    
-    private sealed class CenterPos(Element? element) : RelativePos(0.5f, element)
-    {
-        /// <summary>Returns "Center(reference)".</summary>
-        public override string ToString() => $"Center({ElementString})";
-    }
 
     /// <summary>
     /// Creates a position that centers the element within the reference element.
@@ -110,91 +93,112 @@ public abstract class Pos : ILayoutResolver
     /// <param name="element">
     /// The element to center within. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos Center(Element? element = null) => new CenterPos(element);
+    public static Pos Center(Element? element = null) => new RelativePos(0.5f, element, "Center");
     
-    private sealed class BeginPos(int offset, Element? element) : RelativePos(0, element)
+    private sealed class BeginPos(Element? element) : Pos
     {
-        protected override int Solve(int size, int refPos, int refSize)
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
-            return base.Solve(size, refPos, refSize) + offset;
+            Element reference = element ?? property.Element?.Parent ??
+                throw new LayoutException("Pos.Begin must either specify an element or have a parent element.");
+            return [property with { Element = reference }];
         }
 
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+        {
+            int value = dependencies[0];
+            dependencies = dependencies[1..];
+            return value;
+        }
+        
         /// <summary>Returns "Begin(reference)".</summary>
-        public override string ToString() => $"Begin({ElementString})";
+        public override string ToString() => $"Begin({element?.ToString() ?? "Parent"})";
     }
     
     /// <summary>
-    /// Creates a position aligned to the start (top or left edge) of the reference element, with an optional offset.
-    /// Equivalent to <c>Relative(0, element)</c> plus the offset.
+    /// Creates a position aligned to the start (top or left edge) of the reference element.
     /// </summary>
-    /// <param name="offset">The offset in characters from the start edge.</param>
     /// <param name="element">
     /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos Begin(int offset = 0, Element? element = null) => new BeginPos(offset, element);
-    
-    private sealed class EndPos(int offset, Element? element) : RelativePos(1, element)
-    {
-        protected override int Solve(int size, int refPos, int refSize)
-        {
-            return base.Solve(size, refPos, refSize) - offset;
-        }
-
-        /// <summary>Returns "End(reference)".</summary>
-        public override string ToString() => $"End({ElementString})";
-    }
+    public static Pos Begin(Element? element = null) => new BeginPos(element);
 
     /// <summary>
-    /// Creates a position aligned to the end (bottom or right edge) of the reference element, with an optional offset.
-    /// Equivalent to <c>Relative(1, element)</c> minus the offset.
+    /// Creates a position aligned to the end (bottom or right edge) of the reference element.
+    /// Equivalent to <c>Relative(1, element)</c>.
     /// </summary>
-    /// <param name="offset">The offset in characters from the end edge.</param>
     /// <param name="element">
     /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos End(int offset = 0, Element? element = null) => new EndPos(offset, element);
+    public static Pos End(Element? element = null) => new RelativePos(1, element, "End");
 
-    private sealed class BeforePos(int offset, Element? element) : RelativeBase(element)
+    private sealed class BeforePos(Element? element) : Pos
     {
-        protected override int Solve(int size, int refPos, int refSize)
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
-            return refPos - size - offset;
+            Element reference = element ?? property.Element?.Parent ??
+                throw new LayoutException("Pos.Before must either specify an element or have a parent element.");
+            return
+            [
+                property with { Element = reference },
+                property with { Type = property.Type.SameAxisSize() }
+            ];
         }
 
-        /// <summary>Returns "Before(offset, reference)".</summary>
-        public override string ToString() => $"Before({offset}, {ElementString})";
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+        {
+            int refPos = dependencies[0];
+            int selfSize = dependencies[1];
+            dependencies = dependencies[2..];
+            return refPos - selfSize;
+        }
+        
+        /// <summary>Returns "Before(reference)".</summary>
+        public override string ToString() => $"Before({element?.ToString() ?? "Parent"})";
     }
 
     /// <summary>
-    /// Creates a position placed before (to the left of or above) the reference element with an optional gap.
+    /// Creates a position placed before (to the left of or above) the reference element.
     /// </summary>
-    /// <param name="offset">The gap in characters between the element's end edge and the reference's start edge.</param>
     /// <param name="element">
-    /// The element to position before. If <see langword="null"/>, the parent element is used.
+    /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos Before(int offset = 0, Element? element = null) => new BeforePos(offset, element);
+    public static Pos Before(Element? element = null) => new BeforePos(element);
 
-    private sealed class AfterPos(int offset, Element? element) : RelativeBase(element)
+    private sealed class AfterPos(Element? element) : Pos
     {
-        protected override int Solve(int size, int refPos, int refSize)
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
-            return refPos + refSize + offset;
+            Element reference = element ?? property.Element?.Parent ??
+                throw new LayoutException("Pos.After must either specify an element or have a parent element.");
+            return
+            [
+                property with { Element = reference },
+                new(property.Type.SameAxisSize(), reference)
+            ];
         }
 
-        /// <summary>Returns "After(offset, reference)".</summary>
-        public override string ToString() => $"After({offset}, {ElementString})";
+        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
+        {
+            int refPos = dependencies[0];
+            int refSize = dependencies[1];
+            dependencies = dependencies[2..];
+            return refPos + refSize;
+        }
+        
+        /// <summary>Returns "After(reference)".</summary>
+        public override string ToString() => $"After({element?.ToString() ?? "Parent"})";
     }
 
     /// <summary>
-    /// Creates a position placed after (to the right of or below) the reference element with an optional gap.
+    /// Creates a position placed after (to the right of or below) the reference element.
     /// </summary>
-    /// <param name="offset">The gap in characters between the reference's end edge and this element's start edge.</param>
     /// <param name="element">
-    /// The element to position after. If <see langword="null"/>, the parent element is used.
+    /// The reference element. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Pos After(int offset = 0, Element? element = null) => new AfterPos(offset, element);
+    public static Pos After(Element? element = null) => new AfterPos(element);
 
-    private sealed class CombinedPos(ILayoutResolver left, ILayoutResolver right, Func<int, int, int> combine, string op) : Pos
+    private sealed class CombinedPos(ILayoutResolver left, ILayoutResolver right, Func<int, int, int> combine, string str) : Pos
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
@@ -211,53 +215,58 @@ public abstract class Pos : ILayoutResolver
         }
 
         /// <summary>Returns a string representation of the combined position expression.</summary>
-        public override string ToString() => $"({left} {op} {right})";
+        public override string ToString() => string.Format(str, left, right);
     }
 
     /// <summary>Combines two positions by adding their resolved values.</summary>
-    public static Pos operator +(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a + b, "+");
+    [OverloadResolutionPriority(2)]
+    public static Pos operator +(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a + b, "({0} + {1})");
 
     /// <summary>Combines two positions by subtracting their resolved values.</summary>
-    public static Pos operator -(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a - b, "-");
+    [OverloadResolutionPriority(2)]
+    public static Pos operator -(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a - b, "({0} - {1})");
 
     /// <summary>Combines two positions by multiplying their resolved values.</summary>
-    public static Pos operator *(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a * b, "*");
+    [OverloadResolutionPriority(2)]
+    public static Pos operator *(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a * b, "({0} * {1})");
 
     /// <summary>Combines two positions by dividing their resolved values.</summary>
-    public static Pos operator /(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a / b, "/");
+    [OverloadResolutionPriority(2)]
+    public static Pos operator /(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => a / b, "({0} / {1})");
+
+    /// <summary>Returns a position that resolves to the smaller of the two positions.</summary>
+    /// <param name="left">The first position to compare.</param>
+    /// <param name="right">The second position to compare.</param>
+    public static Pos Min(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => int.Min(a, b), "Min({0}, {1})");
+
+    /// <summary>Returns a position that resolves to the larger of the two positions.</summary>
+    /// <param name="left">The first position to compare.</param>
+    /// <param name="right">The second position to compare.</param>
+    public static Pos Max(Pos left, Pos right) => new CombinedPos(left, right, static (a, b) => int.Max(a, b), "Max({0}, {1})");
 
     /// <summary>
     /// Displaces a position by an offset along the same axis.
     /// </summary>
     /// <param name="position">The position to displace.</param>
     /// <param name="offset">The size to shift the position by.</param>
-    public static Pos operator +(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a + b, "+");
+    [OverloadResolutionPriority(1)]
+    public static Pos operator +(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a + b, "({0} + {1})");
 
     /// <summary>
     /// Displaces a position by an offset along the same axis. The sum is commutative.
     /// </summary>
     /// <param name="offset">The size to shift the position by.</param>
     /// <param name="position">The position to displace.</param>
-    public static Pos operator +(Size offset, Pos position) => new CombinedPos(offset, position, static (a, b) => a + b, "+");
+    [OverloadResolutionPriority(1)]
+    public static Pos operator +(Size offset, Pos position) => new CombinedPos(offset, position, static (a, b) => a + b, "({0} + {1})");
 
     /// <summary>
     /// Displaces a position backwards by an offset along the same axis.
     /// </summary>
     /// <param name="position">The position to displace.</param>
     /// <param name="offset">The size to shift the position by.</param>
-    public static Pos operator -(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a - b, "-");
-
-    // The scalar overloads below exist so integer literals stay unambiguous when mixed with
-    // Pos and Size operands (both have implicit conversions from int).
-
-    /// <summary>Displaces a position by a fixed offset in characters.</summary>
-    public static Pos operator +(Pos position, int offset) => position + Size.Abs(offset);
-
-    /// <summary>Displaces a position by a fixed offset in characters.</summary>
-    public static Pos operator +(int offset, Pos position) => position + Size.Abs(offset);
-
-    /// <summary>Displaces a position backwards by a fixed offset in characters.</summary>
-    public static Pos operator -(Pos position, int offset) => position - Size.Abs(offset);
+    [OverloadResolutionPriority(1)]
+    public static Pos operator -(Pos position, Size offset) => new CombinedPos(position, offset, static (a, b) => a - b, "({0} - {1})");
 
     /// <summary>
     /// Implicitly converts an integer to an absolute position.

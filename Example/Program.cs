@@ -45,7 +45,7 @@ header.AddChild(new TextElement
 
 header.AddChild(new TextElement
 {
-    X = Pos.Begin(1),
+    X = Pos.Begin() + 1,
     Y = Pos.Abs(3),
     Text = "A console UI layout engine",
     Style = subtitleStyle,
@@ -53,7 +53,7 @@ header.AddChild(new TextElement
 
 header.AddChild(new TextElement
 {
-    X = Pos.End(1),
+    X = Pos.End() - 1,
     Y = Pos.Abs(3),
     Text = "v0.1.0",
     Style = dimStyle,
@@ -65,7 +65,7 @@ header.AddChild(new TextElement
 PanelElement sidebar = new PanelElement
 {
     X = Pos.Abs(0),
-    Y = Pos.After(0, header),
+    Y = Pos.After(header),
     Width = Size.Abs(sidebarWidth),
     Height = Size.FitChildren(),
     Title = "Sidebar",
@@ -74,7 +74,7 @@ window.AddChild(sidebar);
 
 sidebar.AddChild(new TextElement
 {
-    X = Pos.Begin(2),
+    X = Pos.Begin() + 2,
     Y = Pos.Abs(1),
     Text = "Navigation",
     Style = labelStyle,
@@ -82,7 +82,7 @@ sidebar.AddChild(new TextElement
 
 sidebar.AddChild(new TextElement
 {
-    X = Pos.Begin(2),
+    X = Pos.Begin() + 2,
     Y = Pos.Abs(3),
     Text = "- Dashboard",
     Style = sidebarItemStyle,
@@ -90,7 +90,7 @@ sidebar.AddChild(new TextElement
 
 sidebar.AddChild(new TextElement
 {
-    X = Pos.Begin(2),
+    X = Pos.Begin() + 2,
     Y = Pos.Abs(5),
     Text = "- Settings",
     Style = sidebarItemStyle,
@@ -98,7 +98,7 @@ sidebar.AddChild(new TextElement
 
 sidebar.AddChild(new TextElement
 {
-    X = Pos.Begin(2),
+    X = Pos.Begin() + 2,
     Y = Pos.Abs(7),
     Text = "- Help",
     Style = sidebarItemStyle,
@@ -111,10 +111,10 @@ sidebar.AddChild(new TextElement
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement main = new PanelElement
 {
-    X = Pos.After(0, sidebar),
-    Y = Pos.After(0, header),
-    Width = Size.Fill(sidebarWidth, window),
-    Height = Size.Fill(headerHeight, window),
+    X = Pos.After(sidebar),
+    Y = Pos.After(header),
+    Width = Size.Fill(window) - sidebarWidth,
+    Height = Size.Fill(window) - headerHeight,
     Title = "Main Content",
 };
 window.AddChild(main);
@@ -170,7 +170,7 @@ card1.AddChild(new TextElement
 PanelElement card2 = new PanelElement
 {
     X = Pos.Relative(0.05f, main),
-    Y = Pos.After(1, card1),
+    Y = Pos.After(card1) + 1,
     Width = Size.Abs(28),
     Height = Size.Abs(6),
     Title = "System",
@@ -214,7 +214,7 @@ card2.AddChild(new TextElement
 // ═══════════════════════════════════════════════════════════════════════
 PanelElement sidePanel = new PanelElement
 {
-    X = Pos.After(2, card1),
+    X = Pos.After(card1) + 2,
     Y = Pos.Relative(0.05f, main),
     Width = Size.Relative(0.4f, main),
     Height = Size.Abs(8),
@@ -232,16 +232,16 @@ sidePanel.AddChild(new TextElement
 
 sidePanel.AddChild(new TextElement
 {
-    X = Pos.End(1),
-    Y = Pos.Begin(1),
+    X = Pos.End() - 1,
+    Y = Pos.Begin() + 1,
     Text = "Right-aligned",
     Style = dimStyle,
 });
 
 sidePanel.AddChild(new TextElement
 {
-    X = Pos.Begin(1),
-    Y = Pos.End(1),
+    X = Pos.Begin() + 1,
+    Y = Pos.End() - 1,
     Text = "Bottom-left corner",
     Style = dimStyle,
 });
@@ -261,7 +261,7 @@ window.AddChild(statusBar);
 
 statusBar.AddChild(new TextElement
 {
-    X = Pos.Begin(1),
+    X = Pos.Begin() + 1,
     Y = Pos.Abs(0),
     Text = "Ready",
     Style = statusStyle,
@@ -269,7 +269,7 @@ statusBar.AddChild(new TextElement
 
 statusBar.AddChild(new TextElement
 {
-    X = Pos.End(1),
+    X = Pos.End() - 1,
     Y = Pos.Abs(0),
     Text = "Scoria Layout Engine",
     Style = dimStyle,

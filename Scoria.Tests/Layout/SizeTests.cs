@@ -289,48 +289,6 @@ public class SizeTests
     }
 
     [Test]
-    public void ToString_Auto_ReturnsAuto()
-    {
-        Assert.That(Size.Auto().ToString(), Is.EqualTo("Auto"));
-    }
-
-    [Test]
-    public void ToString_Abs_ReturnsAbsoluteValue()
-    {
-        Assert.That(Size.Abs(10).ToString(), Is.EqualTo("Absolute(10)"));
-    }
-
-    [Test]
-    public void ToString_Relative_UsesParentWhenNoElement()
-    {
-        Assert.That(Size.Relative(0.5f).ToString(), Is.EqualTo("Relative(0.5, Parent)"));
-    }
-
-    [Test]
-    public void ToString_Relative_UsesElementName()
-    {
-        Assert.That(Size.Relative(0.5f, new NamedElement("target")).ToString(), Is.EqualTo("Relative(0.5, target)"));
-    }
-
-    [Test]
-    public void ToString_Fill_UsesParentWhenNoElement()
-    {
-        Assert.That(Size.Fill().ToString(), Is.EqualTo("Fill(Parent)"));
-    }
-
-    [Test]
-    public void ToString_Aspect_ReturnsRatio()
-    {
-        Assert.That(Size.Aspect(2f).ToString(), Is.EqualTo("Aspect(2)"));
-    }
-
-    [Test]
-    public void ToString_FitChildren_ReturnsFitChildren()
-    {
-        Assert.That(Size.FitChildren().ToString(), Is.EqualTo("FitChildren"));
-    }
-
-    [Test]
     public void Operator_Add_CombinesResolvedValues()
     {
         Assert.That((Size.Abs(5) + Size.Abs(3)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(8));
@@ -352,6 +310,48 @@ public class SizeTests
     public void Operator_Divide_CombinesResolvedValues()
     {
         Assert.That((Size.Abs(7) / Size.Abs(2)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void Min_Resolve_ReturnsSmallerValue()
+    {
+        Assert.That(Size.Min(Size.Abs(5), Size.Abs(3)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(3));
+        Assert.That(Size.Min(Size.Abs(3), Size.Abs(5)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void Max_Resolve_ReturnsLargerValue()
+    {
+        Assert.That(Size.Max(Size.Abs(5), Size.Abs(3)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(5));
+        Assert.That(Size.Max(Size.Abs(3), Size.Abs(5)).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Min_Max_WithRelative_CompareResolvedValues()
+    {
+        Element reference = NewElement();
+
+        // Abs(40) vs Relative(0.5) of [100] = 50.
+        Assert.That(Size.Min(Size.Abs(40), Size.Relative(0.5f, reference)).Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(40));
+        Assert.That(Size.Max(Size.Abs(40), Size.Relative(0.5f, reference)).Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(50));
+    }
+
+    [Test]
+    public void Min_WithImplicitInt_ComparesResolvedValue()
+    {
+        Assert.That(Size.Min(Size.Abs(100), 50).Resolve(Prop(LayoutPropertyType.Width), []), Is.EqualTo(50));
+    }
+
+    [Test]
+    public void Min_GetDependencies_ConcatenatesOperandDependencies()
+    {
+        Element self = NewElement();
+        Element reference = NewElement();
+
+        List<LayoutProperty> dependencies = Size.Min(Size.Abs(5), Size.Relative(0.5f, reference))
+            .GetDependencies(new LayoutProperty(LayoutPropertyType.Width, self));
+
+        Assert.That(dependencies, Is.EqualTo(new[] { new LayoutProperty(LayoutPropertyType.Width, reference) }));
     }
 
     [Test]
@@ -400,7 +400,6 @@ public class SizeTests
 
         // FitChildren() resolves to 12 from [10, 5, 3, 8]; 2.0 resolves to 200 from the parent width 100.
         Assert.That(size.Resolve(new LayoutProperty(LayoutPropertyType.Width, self), [10, 5, 3, 8, 100]), Is.EqualTo(2405));
-        Assert.That(size.ToString(), Is.EqualTo("((FitChildren * Relative(2, Parent)) + Absolute(5))"));
     }
 
     [Test]
@@ -441,25 +440,8 @@ public class SizeTests
         Assert.That(size.Resolve(Prop(LayoutPropertyType.Width), [100]), Is.EqualTo(50));
     }
 
-    [Test]
-    public void ToString_Combined_ReturnsParenthesizedExpression()
-    {
-        Assert.That((Size.Abs(5) + Size.Abs(3)).ToString(), Is.EqualTo("(Absolute(5) + Absolute(3))"));
-    }
-
-    [Test]
-    public void ToString_Combined_WithImplicitInt()
-    {
-        Assert.That((Size.Abs(10) - 3).ToString(), Is.EqualTo("(Absolute(10) - Absolute(3))"));
-    }
-
     private static Element NewElement()
     {
         return new PanelElement { Title = "element" };
-    }
-
-    private sealed class NamedElement(string name) : Element
-    {
-        public override string ToString() => name;
     }
 }

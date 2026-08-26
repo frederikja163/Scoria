@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Scoria.Elements;
 
 namespace Scoria.Layout;
@@ -17,10 +18,10 @@ public abstract class Size : ILayoutResolver
 
     private sealed class AutoSize() : Size
     {
-        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element.ResolveAutoLayoutDependencies(property.Type);
+        internal override List<LayoutProperty> GetDependencies(LayoutProperty property) => property.Element!.ResolveAutoLayoutDependencies(property.Type);
 
         internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
-            => property.Element.ResolveAutoLayout(property.Type, ref dependencies);
+            => property.Element!.ResolveAutoLayout(property.Type, ref dependencies);
 
         /// <summary>Returns "Auto".</summary>
         public override string ToString() => "Auto";
@@ -47,12 +48,12 @@ public abstract class Size : ILayoutResolver
     /// <param name="value">The fixed size in characters.</param>
     public static Size Abs(int value) => new AbsoluteSize(value);
 
-    private class RelativeSize(float factor, Element? element) : Size
+    private sealed class RelativeSize(float factor, Element? element, string func = "Relative") : Size
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property) =>
         [
-            property with { Element = element ?? property.Element.Parent ??
-                throw new LayoutException("Relative size must either specify an element or have a parent element.") }
+            property with { Element = element ?? property.Element?.Parent ??
+                throw new LayoutException($"Size.{func} must either specify an element or have a parent element.") }
         ];
 
         internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
@@ -62,10 +63,8 @@ public abstract class Size : ILayoutResolver
             return (int)(factor * refSize);
         }
 
-        protected string ElementString => element?.ToString() ?? "Parent";
-
-        /// <summary>Returns "Relative(factor, reference)".</summary>
-        public override string ToString() => $"Relative({factor.ToString(CultureInfo.InvariantCulture)}, {ElementString})";
+        /// <summary>Returns "{func}(factor, reference)".</summary>
+        public override string ToString() => $"{func}({factor.ToString(CultureInfo.InvariantCulture)}, {element?.ToString() ?? "Parent"})";
     }
 
     /// <summary>
@@ -77,17 +76,6 @@ public abstract class Size : ILayoutResolver
     /// </param>
     public static Size Relative(float factor, Element? element = null) => new RelativeSize(factor, element);
 
-    private sealed class FillSize(int margin, Element? element) : RelativeSize(1, element)
-    {
-        internal override int Resolve(LayoutProperty property, ref ReadOnlySpan<int> dependencies)
-        {
-            return base.Resolve(property, ref dependencies) - margin;
-        }
-
-        /// <summary>Returns "Fill(reference)".</summary>
-        public override string ToString() => $"Fill({ElementString})";
-    }
-
     /// <summary>
     /// Creates a size that fills the entire reference element along this axis.
     /// Equivalent to <c>Relative(1, element)</c>.
@@ -95,7 +83,7 @@ public abstract class Size : ILayoutResolver
     /// <param name="element">
     /// The element to fill. If <see langword="null"/>, the parent element is used.
     /// </param>
-    public static Size Fill(int margin = 0, Element? element = null) => new FillSize(margin, element);
+    public static Size Fill(Element? element = null) => new RelativeSize(1, element, "Fill");
 
     private sealed class AspectSize(float aspectRatio) : Size
     {
@@ -124,7 +112,7 @@ public abstract class Size : ILayoutResolver
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
             List<LayoutProperty> properties = [];
-            foreach (Element child in property.Element.GetChildren())
+            foreach (Element child in property.Element!.GetChildren())
             {
                 properties.Add(new LayoutProperty(property.Type.SameAxisPosition(), child));
                 properties.Add(property with { Element = child });
@@ -137,7 +125,7 @@ public abstract class Size : ILayoutResolver
         {
             int min = int.MaxValue;
             int max = int.MinValue;
-            foreach (Element child in property.Element.GetChildren())
+            foreach (Element child in property.Element!.GetChildren())
             {
                 int pos = dependencies[0];
                 int size = dependencies[1];
@@ -157,7 +145,7 @@ public abstract class Size : ILayoutResolver
     /// </summary>
     public static Size FitChildren() => new FitChildrenSize();
 
-    private sealed class CombinedSize(Size left, Size right, Func<int, int, int> combine, string op) : Size
+    private sealed class CombinedSize(Size left, Size right, Func<int, int, int> combine, string str) : Size
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
@@ -174,29 +162,34 @@ public abstract class Size : ILayoutResolver
         }
 
         /// <summary>Returns a string representation of the combined size expression.</summary>
-        public override string ToString() => $"({left} {op} {right})";
+        public override string ToString() => string.Format(str, left, right);
     }
 
     /// <summary>Combines two sizes by adding their resolved values.</summary>
-    public static Size operator +(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a + b, "+");
+    [OverloadResolutionPriority(2)]
+    public static Size operator +(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a + b, "({0} + {1})");
 
     /// <summary>Combines two sizes by subtracting their resolved values.</summary>
-    public static Size operator -(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a - b, "-");
+    [OverloadResolutionPriority(2)]
+    public static Size operator -(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a - b, "({0} - {1})");
 
     /// <summary>Combines two sizes by multiplying their resolved values.</summary>
-    public static Size operator *(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a * b, "*");
+    [OverloadResolutionPriority(2)]
+    public static Size operator *(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a * b, "({0} * {1})");
 
     /// <summary>Combines two sizes by dividing their resolved values.</summary>
-    public static Size operator /(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a / b, "/");
+    [OverloadResolutionPriority(2)]
+    public static Size operator /(Size left, Size right) => new CombinedSize(left, right, static (a, b) => a / b, "({0} / {1})");
 
-    // The scalar overloads below exist so integer literals stay unambiguous when mixed with
-    // Pos and Size operands (both have implicit conversions from int).
+    /// <summary>Returns a size that resolves to the smaller of the two sizes.</summary>
+    /// <param name="left">The first size to compare.</param>
+    /// <param name="right">The second size to compare.</param>
+    public static Size Min(Size left, Size right) => new CombinedSize(left, right, static (a, b) => int.Min(a, b), "Min({0}, {1})");
 
-    /// <summary>Adds a fixed offset in characters to a size.</summary>
-    public static Size operator +(Size size, int offset) => size + Size.Abs(offset);
-
-    /// <summary>Adds a fixed offset in characters to a size.</summary>
-    public static Size operator +(int offset, Size size) => Size.Abs(offset) + size;
+    /// <summary>Returns a size that resolves to the larger of the two sizes.</summary>
+    /// <param name="left">The first size to compare.</param>
+    /// <param name="right">The second size to compare.</param>
+    public static Size Max(Size left, Size right) => new CombinedSize(left, right, static (a, b) => int.Max(a, b), "Max({0}, {1})");
 
     /// <summary>
     /// Implicitly converts an integer to an absolute size.

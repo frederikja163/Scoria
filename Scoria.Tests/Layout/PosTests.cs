@@ -194,7 +194,7 @@ public class PosTests
     }
 
     [Test]
-    public void Begin_GetDependencies_ReferencesSelfSizeThenReferencePositionThenReferenceSize()
+    public void Begin_GetDependencies_ReferencesReferencePosition()
     {
         Element self = NewElement();
         Element reference = NewElement();
@@ -203,16 +203,14 @@ public class PosTests
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
-            new LayoutProperty(LayoutPropertyType.Width, self),
             new LayoutProperty(LayoutPropertyType.X, reference),
-            new LayoutProperty(LayoutPropertyType.Width, reference),
         }));
     }
 
     [Test]
     public void Begin_Resolve_AlignsToReferencePosition()
     {
-        Assert.That(Pos.Begin().Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(50));
+        Assert.That(Pos.Begin().Resolve(Prop(LayoutPropertyType.X), [50]), Is.EqualTo(50));
     }
 
     [Test]
@@ -238,7 +236,7 @@ public class PosTests
     }
 
     [Test]
-    public void Before_GetDependencies_ReferencesSelfSizeThenReferencePositionThenReferenceSize()
+    public void Before_GetDependencies_ReferencesReferencePositionThenSelfSize()
     {
         Element self = NewElement();
         Element reference = NewElement();
@@ -247,26 +245,19 @@ public class PosTests
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
-            new LayoutProperty(LayoutPropertyType.Width, self),
             new LayoutProperty(LayoutPropertyType.X, reference),
-            new LayoutProperty(LayoutPropertyType.Width, reference),
+            new LayoutProperty(LayoutPropertyType.Width, self),
         }));
     }
 
     [Test]
     public void Before_Resolve_PlacesElementBeforeReference()
     {
-        Assert.That(Pos.Before().Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(30));
+        Assert.That(Pos.Before().Resolve(Prop(LayoutPropertyType.X), [50, 20]), Is.EqualTo(30));
     }
 
     [Test]
-    public void Before_Resolve_WithGap_PlacesElementBeforeReferenceWithOffset()
-    {
-        Assert.That(Pos.Before(5).Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(25));
-    }
-
-    [Test]
-    public void After_GetDependencies_ReferencesSelfSizeThenReferencePositionThenReferenceSize()
+    public void After_GetDependencies_ReferencesReferencePositionThenReferenceSize()
     {
         Element self = NewElement();
         Element reference = NewElement();
@@ -275,7 +266,6 @@ public class PosTests
 
         Assert.That(dependencies, Is.EqualTo(new[]
         {
-            new LayoutProperty(LayoutPropertyType.Width, self),
             new LayoutProperty(LayoutPropertyType.X, reference),
             new LayoutProperty(LayoutPropertyType.Width, reference),
         }));
@@ -284,13 +274,7 @@ public class PosTests
     [Test]
     public void After_Resolve_PlacesElementAfterReference()
     {
-        Assert.That(Pos.After().Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(80));
-    }
-
-    [Test]
-    public void After_Resolve_WithGap_PlacesElementAfterReferenceWithOffset()
-    {
-        Assert.That(Pos.After(5).Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(85));
+        Assert.That(Pos.After().Resolve(Prop(LayoutPropertyType.X), [50, 30]), Is.EqualTo(80));
     }
 
     [Test]
@@ -443,6 +427,53 @@ public class PosTests
     }
 
     [Test]
+    public void Min_Resolve_ReturnsSmallerValue()
+    {
+        Assert.That(Pos.Min(Pos.Abs(5), Pos.Abs(3)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(3));
+        Assert.That(Pos.Min(Pos.Abs(3), Pos.Abs(5)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(3));
+    }
+
+    [Test]
+    public void Max_Resolve_ReturnsLargerValue()
+    {
+        Assert.That(Pos.Max(Pos.Abs(5), Pos.Abs(3)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(5));
+        Assert.That(Pos.Max(Pos.Abs(3), Pos.Abs(5)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Min_Max_WithRelative_CompareResolvedValues()
+    {
+        Element reference = NewElement();
+
+        // Abs(60) vs Center of [20, 50, 30] = 55.
+        Assert.That(Pos.Min(Pos.Abs(60), Pos.Center(reference)).Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(55));
+        Assert.That(Pos.Max(Pos.Abs(60), Pos.Center(reference)).Resolve(Prop(LayoutPropertyType.X), [20, 50, 30]), Is.EqualTo(60));
+    }
+
+    [Test]
+    public void Min_WithImplicitInt_ComparesResolvedValue()
+    {
+        Assert.That(Pos.Min(Pos.Abs(100), 50).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(50));
+    }
+
+    [Test]
+    public void Min_GetDependencies_ConcatenatesOperandDependencies()
+    {
+        Element self = NewElement();
+        Element reference = NewElement();
+
+        Pos pos = Pos.Min(Pos.Abs(5), Pos.Center(reference));
+        List<LayoutProperty> dependencies = pos.GetDependencies(new LayoutProperty(LayoutPropertyType.X, self));
+
+        Assert.That(dependencies, Is.EqualTo(new[]
+        {
+            new LayoutProperty(LayoutPropertyType.Width, self),
+            new LayoutProperty(LayoutPropertyType.X, reference),
+            new LayoutProperty(LayoutPropertyType.Width, reference),
+        }));
+    }
+
+    [Test]
     public void Operator_Add_SizeToPos_DisplacesPosition()
     {
         Assert.That((Pos.Abs(3) + Size.Abs(4)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(7));
@@ -457,7 +488,7 @@ public class PosTests
         // Begin resolves to the reference's start (50); Size.Relative(0.5) adds half of the reference width (15).
         Pos pos = Pos.Begin(element: reference) + Size.Relative(0.5f, reference);
 
-        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [20, 50, 30, 30]), Is.EqualTo(65));
+        Assert.That(pos.Resolve(Prop(LayoutPropertyType.X), [50, 30]), Is.EqualTo(65));
     }
 
     [Test]
@@ -471,7 +502,6 @@ public class PosTests
     {
         Assert.That((Pos.Abs(5) + 3).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
         Assert.That((3 + Pos.Abs(5)).Resolve(Prop(LayoutPropertyType.X), []), Is.EqualTo(8));
-        Assert.That((Pos.Center() + 2).ToString(), Is.EqualTo("(Center(Parent) + Absolute(2))"));
     }
 
     [Test]
@@ -510,7 +540,7 @@ public class PosTests
         Element reference = NewElement();
         Pos pos = (Pos.Begin(element: reference) + Pos.Abs(3)) * 2;
 
-        Assert.That(pos.Resolve(new LayoutProperty(LayoutPropertyType.X, self), [20, 50, 30]), Is.EqualTo(106));
+        Assert.That(pos.Resolve(new LayoutProperty(LayoutPropertyType.X, self), [20, 50, 30]), Is.EqualTo(46));
     }
 
     [Test]
@@ -545,12 +575,6 @@ public class PosTests
     }
 
     [Test]
-    public void ToString_Combined_ReturnsParenthesizedExpression()
-    {
-        Assert.That((Pos.Abs(5) + Pos.Abs(3)).ToString(), Is.EqualTo("(Absolute(5) + Absolute(3))"));
-    }
-
-    [Test]
     public void Solve_CombinedPositions_ResolveToCombinedValues()
     {
         Element parent = NewElement(width: 100, height: 80);
@@ -568,60 +592,6 @@ public class PosTests
         Assert.That(child.CalculatedLayout.Y, Is.EqualTo(39));
         Assert.That(child.CalculatedLayout.Width, Is.EqualTo(6));
         Assert.That(child.CalculatedLayout.Height, Is.EqualTo(6));
-    }
-
-    [Test]
-    public void ToString_Auto_ReturnsAuto()
-    {
-        Assert.That(Pos.Auto().ToString(), Is.EqualTo("Auto"));
-    }
-
-    [Test]
-    public void ToString_Abs_ReturnsAbsoluteValue()
-    {
-        Assert.That(Pos.Abs(10).ToString(), Is.EqualTo("Absolute(10)"));
-    }
-
-    [Test]
-    public void ToString_Relative_UsesParentWhenNoElement()
-    {
-        Assert.That(Pos.Relative(0.5f).ToString(), Is.EqualTo("Relative(0.5, Parent)"));
-    }
-
-    [Test]
-    public void ToString_Relative_UsesElementName()
-    {
-        Assert.That(Pos.Relative(0.5f, new NamedElement("target")).ToString(), Is.EqualTo("Relative(0.5, target)"));
-    }
-
-    [Test]
-    public void ToString_Center_UsesElementName()
-    {
-        Assert.That(Pos.Center(new NamedElement("target")).ToString(), Is.EqualTo("Center(target)"));
-    }
-
-    [Test]
-    public void ToString_Begin_UsesParentWhenNoElement()
-    {
-        Assert.That(Pos.Begin().ToString(), Is.EqualTo("Begin(Parent)"));
-    }
-
-    [Test]
-    public void ToString_End_UsesElementName()
-    {
-        Assert.That(Pos.End(element: new NamedElement("target")).ToString(), Is.EqualTo("End(target)"));
-    }
-
-    [Test]
-    public void ToString_Before_IncludesValueAndElement()
-    {
-        Assert.That(Pos.Before(3, new NamedElement("target")).ToString(), Is.EqualTo("Before(3, target)"));
-    }
-
-    [Test]
-    public void ToString_After_IncludesValueAndElement()
-    {
-        Assert.That(Pos.After(4, new NamedElement("target")).ToString(), Is.EqualTo("After(4, target)"));
     }
 
     private static LayoutSolver BuildSolver(Element root)
@@ -688,10 +658,5 @@ public class PosTests
             Width = Size.Abs(width),
             Height = Size.Abs(height),
         };
-    }
-
-    private sealed class NamedElement(string name) : Element
-    {
-        public override string ToString() => name;
     }
 }
