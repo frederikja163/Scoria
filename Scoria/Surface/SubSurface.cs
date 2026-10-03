@@ -10,17 +10,11 @@ public sealed class SubSurface : ISurface
 
     internal SubSurface(ISurface parent, int offsetX, int offsetY, int width, int height, Theme theme)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(offsetX);
-        ArgumentOutOfRangeException.ThrowIfNegative(offsetY);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(offsetX + width, parent.Width);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(offsetY + height, parent.Height);
         _parent = parent;
-        OffsetX = offsetX;
-        OffsetY = offsetY;
-        Width = width;
-        Height = height;
+        OffsetX = Math.Clamp(offsetX, 0, parent.Width);
+        OffsetY = Math.Clamp(offsetY, 0, parent.Height);
+        Width = Math.Clamp(width, 0, Math.Max(0, parent.Width - OffsetX - 1));
+        Height = Math.Clamp(height, 0, Math.Max(0, parent.Height - OffsetY - 1));
         Theme = theme;
     }
 
@@ -39,30 +33,30 @@ public sealed class SubSurface : ISurface
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(x, Width);
-        ArgumentOutOfRangeException.ThrowIfNegative(x);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(y, Height);
-        ArgumentOutOfRangeException.ThrowIfNegative(y);
+        if (Width <= 0 || Height <= 0)
+            return;
+        x = Math.Clamp(x, 0, Width - 1);
+        y = Math.Clamp(y, 0, Height - 1);
         _parent.Write(c, x + OffsetX, y + OffsetY, style);
     }
 
     /// <inheritdoc />
     public char GetChar(int x, int y)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(x, Width);
-        ArgumentOutOfRangeException.ThrowIfNegative(x);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(y, Height);
-        ArgumentOutOfRangeException.ThrowIfNegative(y);
+        if (Width <= 0 || Height <= 0)
+            return (char)0;
+        x = Math.Clamp(x, 0, Width - 1);
+        y = Math.Clamp(y, 0, Height - 1);
         return _parent.GetChar(x + OffsetX, y + OffsetY);
     }
 
     /// <inheritdoc />
     public Style GetStyle(int x, int y)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(x, Width);
-        ArgumentOutOfRangeException.ThrowIfNegative(x);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(y, Height);
-        ArgumentOutOfRangeException.ThrowIfNegative(y);
+        if (Width <= 0 || Height <= 0)
+            return Style.Default;
+        x = Math.Clamp(x, 0, Width - 1);
+        y = Math.Clamp(y, 0, Height - 1);
         return _parent.GetStyle(x + OffsetX, y + OffsetY);
     }
 }

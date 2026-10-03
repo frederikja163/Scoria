@@ -146,7 +146,7 @@ public abstract class Element
     {
         return true;
     }
-    
+
     /// <summary>
     /// Renders this element and its children to the given surface.
     /// </summary>
@@ -189,7 +189,7 @@ public sealed class PanelElement : Element
 
     /// <summary>When <see langword="true"/>, the panel is drawn with thin (single-line) borders instead of thick ones.</summary>
     public bool ThinBorders = false;
-    
+
     /// <inheritdoc/>
     protected override void Render(ISurface surface)
     {
@@ -207,7 +207,7 @@ public sealed class TextElement : Element
     public Style Style { get; set; } = default;
     /// <summary>The text content to render.</summary>
     public string Text { get; set; } = string.Empty;
-    
+
     // TODO: Text element is missing a lot of features, like text wrapping, proper size detection etc.
     /// <inheritdoc/>
     protected override void Render(ISurface surface)
@@ -222,7 +222,7 @@ public sealed class TextElement : Element
     protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType type)
     {
         if (type == LayoutPropertyType.Width)
-            return [new LayoutProperty(LayoutPropertyType.Width, Parent)];
+            return [new LayoutProperty(LayoutPropertyType.Width, Parent!)];
         if (type == LayoutPropertyType.Height)
             return [new(LayoutPropertyType.Width, this)];
         return [];
@@ -236,7 +236,7 @@ public sealed class TextElement : Element
         {
             int width = dependencies[0];
             // Integer division with rounding up.
-            return (Text.Length + width - 1) / width;
+            return width == 0 ? 0 : (Text.Length + width - 1) / width;
         }
 
         return 0;

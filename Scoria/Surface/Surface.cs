@@ -15,10 +15,10 @@ public sealed class Surface : ISurface
     /// <param name="theme">The theme associated with the surface.</param>
     public Surface(int width, int height, Theme theme)
     {
-        Width = width;
-        Height = height;
-        _glyphs = new char[width, height];
-        _styles = new Style[width, height];
+        Width = Math.Max(0, width);
+        Height = Math.Max(0, height);
+        _glyphs = new char[Width, Height];
+        _styles = new Style[Width, Height];
         Theme = theme;
     }
 
@@ -33,11 +33,11 @@ public sealed class Surface : ISurface
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(x);
-        ArgumentOutOfRangeException.ThrowIfNegative(y);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(x, Width);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(y, Height);
-        
+        if (Width <= 0 || Height <= 0)
+            return;
+        x = Math.Clamp(x, 0, Width - 1);
+        y = Math.Clamp(y, 0, Height - 1);
+
         _glyphs[x, y] = c;
         if (style.Alpha != byte.MaxValue)
         {
@@ -56,7 +56,7 @@ public sealed class Surface : ISurface
     {
         return _glyphs[x, y];
     }
-    
+
     /// <inheritdoc />
     public Style GetStyle(int x, int y)
     {
