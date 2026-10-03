@@ -48,6 +48,10 @@ internal sealed class LinuxConsoleDriver : IPlatformDriver
 
     private const short POLLIN = 1;
 
+    // TODO: Implement this with more low-level calls.
+    public int Width => Console.BufferWidth;
+    public int Height => Console.BufferHeight;
+
     public void Init()
     {
         _fd = open("/dev/tty", O_RdWr);

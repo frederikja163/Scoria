@@ -21,9 +21,17 @@ internal sealed class LayoutSolver
     {
         foreach (LayoutProperty property in _topologicalOrder)
         {
-            ILayoutResolver resolver = property.GetProperty();
-            int value = resolver.Resolve(property, _dependencies[property].Select(p => p.GetValue()).ToList());
-            property.SetValue(value);
+            try
+            {
+                ILayoutResolver resolver = property.GetProperty();
+                int value = resolver.Resolve(property, _dependencies[property].Select(p => p.GetValue()).ToList());
+                property.SetValue(value);
+            }
+            catch (LayoutException ex)
+            {
+                ex.LayoutProperty = property;
+                throw;
+            }
         }
     }
 
@@ -32,7 +40,7 @@ internal sealed class LayoutSolver
         EdgeMap dependencyEdges = [];
         EdgeMap dependentEdges = [];
         Queue<LayoutProperty> emptyQueue = [];
-        Dictionary<LayoutProperty, List<LayoutProperty>> dependencies = [];
+        DependencyMap dependencies = [];
         foreach (Element element in GetChildrenRecursive(parentElement, includeSelf))
         {
             AddEdges(new LayoutProperty(LayoutPropertyType.X, element));
@@ -44,19 +52,27 @@ internal sealed class LayoutSolver
         List<LayoutProperty> topologicalOrder = TopologicalSort(emptyQueue, dependencyEdges, dependentEdges);
         LayoutSolver layoutSolver = new LayoutSolver(topologicalOrder, dependencies);
         layoutSolver.Solve();
-        
+
         void AddEdges(LayoutProperty source)
         {
-            List<LayoutProperty> targets = source.GetProperty().GetDependencies(source);
-            dependencies.Add(source, targets);
-            if (!targets.Any())
+            try
             {
-                emptyQueue.Enqueue(source);
+                List<LayoutProperty> targets = source.GetProperty().GetDependencies(source);
+                dependencies.Add(source, targets);
+                if (!targets.Any())
+                {
+                    emptyQueue.Enqueue(source);
+                }
+                foreach (LayoutProperty target in targets)
+                {
+                    AddEdge(dependencyEdges, source, target);
+                    AddEdge(dependentEdges, target, source);
+                }
             }
-            foreach (LayoutProperty target in targets)
+            catch (LayoutException ex)
             {
-                AddEdge(dependencyEdges, source, target);
-                AddEdge(dependentEdges, target, source);
+                ex.LayoutProperty = source;
+                throw;
             }
         }
     }
@@ -83,7 +99,7 @@ internal sealed class LayoutSolver
         {
             // Add to empty queue.
             topologicalOrder.Add(node);
-            
+
             // Remove any edges going to this edge.
             if (!dependentEdges.TryGetValue(node, out EdgeCollection? sources))
                 continue;
@@ -120,7 +136,7 @@ internal sealed class LayoutSolver
             yield return node;
             node = dependencies?.FirstOrDefault();
         } while (node is not null && node != first && dependencyEdges.TryGetValue(node, out dependencies));
-        
+
         yield return first;
 
         if (dependencies is null)

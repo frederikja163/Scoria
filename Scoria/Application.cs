@@ -23,13 +23,12 @@ public sealed class Application
 {
     /// <summary>Gets the currently running application, or <see langword="null"/> if none is running.</summary>
     public static Application? Current { get; private set; }
-    
+
     private readonly ConsoleDriver _driver = new(
         new FocusInputProvider(),
         new KeyInputProvider(),
         new MouseInputProvider(),
-        new PasteInputProvider(),
-        new ResizeInputProvider());
+        new PasteInputProvider());
 
     /// <summary>
     /// Initializes a new <see cref="Application"/> with the specified options.
@@ -66,9 +65,11 @@ public sealed class Application
         _driver.OnEvent += DriverOnOnEvent;
         while (IsRunning)
         {
+            // TODO: Because resize does not stop the polling we need a timespan here.
+            // The correct solution would be for the platform drivers to stop the polling when resize is detected.
+            _driver.PollInput(TimeSpan.FromMilliseconds(100));
             Surface surface = Window.GetSurface(_driver.Width, _driver.Height);
             _driver.Frame(surface);
-            _driver.PollInput();
         }
 
         _driver.OnEvent -= DriverOnOnEvent;

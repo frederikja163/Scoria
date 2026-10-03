@@ -17,6 +17,8 @@ public sealed class Window : Element
     public Window()
     {
         _surface = new Surface(0, 0, Theme);
+        XDefault = Pos.Abs(0);
+        YDefault = Pos.Abs(0);
     }
 
     /// <summary>Gets or sets the theme used to render this window and inherited by its surface.</summary>
@@ -70,7 +72,7 @@ public sealed class Window : Element
         {
             Height = Size.Abs(height);
         }
-        
+
         if (NeedsCalculateLayout)
         {
             NeedsCalculateLayout = false;
