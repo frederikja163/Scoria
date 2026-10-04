@@ -11,10 +11,10 @@ public sealed class SubSurface : ISurface
     internal SubSurface(ISurface parent, int offsetX, int offsetY, int width, int height, Theme theme)
     {
         _parent = parent;
-        OffsetX = Math.Clamp(offsetX, 0, parent.Width);
-        OffsetY = Math.Clamp(offsetY, 0, parent.Height);
-        Width = Math.Clamp(width, 0, Math.Max(0, parent.Width - OffsetX - 1));
-        Height = Math.Clamp(height, 0, Math.Max(0, parent.Height - OffsetY - 1));
+        OffsetX = Math.Clamp(offsetX, 0, parent.Width - 1);
+        OffsetY = Math.Clamp(offsetY, 0, parent.Height - 1);
+        Width = Math.Clamp(width, 0, Math.Max(0, parent.Width - OffsetX));
+        Height = Math.Clamp(height, 0, Math.Max(0, parent.Height - OffsetY));
         Theme = theme;
     }
 
