@@ -149,7 +149,7 @@ public abstract class Size : ILayoutResolver
     {
         internal override List<LayoutProperty> GetDependencies(LayoutProperty property)
         {
-            List<LayoutProperty> dependencies = left.GetDependencies(property);
+            List<LayoutProperty> dependencies = new(left.GetDependencies(property));
             dependencies.AddRange(right.GetDependencies(property));
             return dependencies;
         }
