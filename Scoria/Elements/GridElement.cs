@@ -9,13 +9,7 @@ public enum GridFillMethod
     RowThenColumn,
     Explicit,
 }
-public enum GridResizeMethod
-{
-    Columns,
-    Rows,
-    NoResize,
-}
-// TODO: Consider endpoints like resize(element wise), clear cell, expand element, AddChild(element,4xint) etc.
+// TODO: Consider endpoints like resize, clear cell, expand element, AddChild(element,4xint) etc.
 // There are so many endpoints we can add here, and its mostly just syntactic sugar so its not worth it adding all of them.
 public sealed class GridElement : Element
 {
@@ -54,15 +48,14 @@ public sealed class GridElement : Element
                 LayoutPropertyType.Height => (false, Rows, Parent.Rows, Parent.RowGap),
                 _ => throw new UnreachableException(),
             };
-            // TODO: Handle parent size
             (int cellStart, int cellLength) = range.GetOffsetAndLength(length);
             int spacing = dependencies[0] / length;
             return position ? cellStart * spacing : cellLength * spacing - gap;
         }
     }
 
-    private List<Node>[,] _nodes;
-    private readonly Dictionary<Element, Node> _nodeMap = new();
+    private readonly List<Node>[,] _nodes;
+    private readonly Dictionary<Element, Node> _nodeMap = [];
 
     public GridElement(int columns, int rows)
     {
@@ -83,8 +76,6 @@ public sealed class GridElement : Element
     public int Rows { get; private set; }
 
     public GridFillMethod FillMethod { get; set; } = GridFillMethod.RowThenColumn;
-
-    public GridResizeMethod ResizeMethod { get; set; } = GridResizeMethod.Rows;
 
     public int ColumnGap
     {
@@ -115,9 +106,9 @@ public sealed class GridElement : Element
         nodes.Add(node);
     }
 
-    public void AddChild(Element element, int col, int row) => AddChild(element, new Range(col, col), new Range(row, row));
+    public void AddChild(Element element, int col, int row) => AddChild(element, new Range(col, col + 1), new Range(row, row + 1));
 
-    public void AddChild(Element element, Index col, Index row) => AddChild(element, new Range(col, col), new Range(row, row));
+    public void AddChild(Element element, Index col, Index row) => AddChild(element, new Range(col, col.Add(1)), new Range(row, row.Add(1)));
 
     public void AddChild(Element element, Range colRange, Range rowRange)
     {
@@ -127,9 +118,9 @@ public sealed class GridElement : Element
         Node node = new(this, element, colRange, rowRange);
         base.AddChild(node);
         _nodeMap.Add(element, node);
-        for (int c = 0; c <= cols; c++)
+        for (int c = 0; c < cols; c++)
         {
-            for (int r = 0; r <= rows; r++)
+            for (int r = 0; r < rows; r++)
             {
                 List<Node> nodes = _nodes[c + minCol, r + minRow];
                 nodes.Add(node);
@@ -194,5 +185,4 @@ public sealed class GridElement : Element
         col = row = 0;
         return []; // TODO: Resize instead.
     }
-    // TODO: Resize grid
 }

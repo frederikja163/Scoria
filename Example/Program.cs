@@ -15,13 +15,11 @@ GridElement element = new GridElement(3, 2)
     FillMethod = GridFillMethod.ColumnThenRow,
 };
 
-element.AddChild(new SolidElement() { Char = '1', Style = Style.Default });
+element.AddChild(new SolidElement() { Char = '1', Style = Style.Default }, 1, 0);
 element.AddChild(new SolidElement() { Char = '2', Style = Style.Default });
 element.AddChild(new SolidElement() { Char = '3', Style = Style.Default });
 element.AddChild(new SolidElement() { Char = '4', Style = Style.Default });
 element.AddChild(new SolidElement() { Char = '5', Style = Style.Default });
-element.AddChild(new SolidElement() { Char = '6', Style = Style.Default });
-element.AddChild(new SolidElement() { Char = '7', Style = Style.Default });
 window.AddChild(element);
 
 

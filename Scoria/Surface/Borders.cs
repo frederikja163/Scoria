@@ -19,7 +19,7 @@ public sealed class Borders : IBorders
         '┒', '┰', '┲', ' ', '┧', '╁', '╆', ' ', '┨', '╂', '╊', ' ', ' ', ' ', ' ', ' ', '┓', '┱',
         '┳', ' ', '┪', '╅', '╈', ' ', '┫', '╉', '╋',
     ];
-    
+
     /// <summary>The character used to mark thin border cells before they are expanded into glyphs.</summary>
     public static char ThinBorderCharacter { get; } = '\x1e';
     /// <summary>The character used to mark thick border cells before they are expanded into glyphs.</summary>
