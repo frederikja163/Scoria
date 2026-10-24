@@ -1,5 +1,12 @@
 ﻿namespace Scoria;
 
+public enum BorderStyle
+{
+    None,
+    Thin,
+    Thick,
+}
+
 /// <summary>
 /// Default <see cref="IBorders"/> implementation. Draws box-drawing borders by joining
 /// adjacent border cells into the appropriate corner, junction, and line glyphs.

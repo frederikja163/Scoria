@@ -17,10 +17,10 @@ public abstract class Element
         Events = new EventRouter(this);
     }
 
-    protected Pos XDefault { get; set; } = Pos.Center();
-    protected Pos YDefault { get; set; } = Pos.Center();
-    protected Size WidthDefault { get; set; } = Size.Fill();
-    protected Size HeightDefault { get; set; } = Size.Fill();
+    protected Pos XDefault { get; init; } = Pos.Center();
+    protected Pos YDefault { get; init; } = Pos.Center();
+    protected Size WidthDefault { get; init; } = Size.Fill();
+    protected Size HeightDefault { get; init; } = Size.Fill();
 
     /// <summary>Horizontal position of this element within its parent.</summary>
     public Pos X

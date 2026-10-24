@@ -38,7 +38,7 @@ public sealed class GridElement : Element
             return [new LayoutProperty(type.SameAxisSize(), Parent)];
         }
 
-        protected internal override int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
+        protected internal override int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
         {
             (bool position, Range range, int length, int gap) = type switch
             {
@@ -50,6 +50,7 @@ public sealed class GridElement : Element
             };
             (int cellStart, int cellLength) = range.GetOffsetAndLength(length);
             int spacing = dependencies[0] / length;
+            dependencies = dependencies[1..];
             return position ? cellStart * spacing : cellLength * spacing - gap;
         }
     }
