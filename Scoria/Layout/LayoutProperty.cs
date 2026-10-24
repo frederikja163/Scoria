@@ -21,30 +21,30 @@ internal interface ILayoutResolver
 {
     internal List<LayoutProperty> GetDependencies(LayoutProperty layoutProperty);
 
-    internal int Resolve(LayoutProperty layoutProperty, List<int> dependencies);
+    internal int Resolve(LayoutProperty layoutProperty, ref ReadOnlySpan<int> dependencies);
 }
 
 /// <summary>
 /// Represents a reference to a specific layout property (position or size) on an element.
 /// </summary>
-public sealed record LayoutProperty(LayoutPropertyType Type, Element Element)
+public sealed record LayoutProperty(LayoutPropertyType Type, Element? Element)
 {
     internal void SetValue(int value)
     {
-        Element.CalculatedLayout.SetProperty(Type, value);
+        Element!.CalculatedLayout.SetProperty(Type, value);
     }
 
     internal int GetValue()
     {
-        return Element.CalculatedLayout.GetProperty(Type);
+        return Element!.CalculatedLayout.GetProperty(Type);
     }
     
     internal ILayoutResolver GetProperty() => Type switch
     {
-        LayoutPropertyType.X => Element.X,
-        LayoutPropertyType.Y => Element.Y,
-        LayoutPropertyType.Width => Element.Width,
-        LayoutPropertyType.Height => Element.Height,
+        LayoutPropertyType.X => Element!.X,
+        LayoutPropertyType.Y => Element!.Y,
+        LayoutPropertyType.Width => Element!.Width,
+        LayoutPropertyType.Height => Element!.Height,
         _ => throw new ArgumentOutOfRangeException()
     };
 
