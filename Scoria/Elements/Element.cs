@@ -165,9 +165,9 @@ public abstract class Element
         return GetDefaultLayoutResolver(type).GetDependencies(new LayoutProperty(type, this));
     }
 
-    protected internal virtual int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
+    protected internal virtual int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
     {
-        return GetDefaultLayoutResolver(type).Resolve(new LayoutProperty(type, this), dependencies);
+        return GetDefaultLayoutResolver(type).Resolve(new LayoutProperty(type, this), ref dependencies);
     }
 
     private ILayoutResolver GetDefaultLayoutResolver(LayoutPropertyType propertyType) => propertyType switch
@@ -179,4 +179,3 @@ public abstract class Element
         _ => throw new ArgumentOutOfRangeException(nameof(propertyType), propertyType, null)
     };
 }
-
