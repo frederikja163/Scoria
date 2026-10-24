@@ -8,6 +8,7 @@ namespace Scoria.Elements;
 /// </summary>
 public abstract class Element
 {
+    // TODO: Make a way to hide some elements so .Parent skips the element and goes to the next and .GetChildren skips them too.
     private readonly List<Element> _children = new List<Element>();
 
     /// <summary>Initializes a new instance of the <see cref="Element"/> class.</summary>
@@ -87,7 +88,7 @@ public abstract class Element
     /// </summary>
     /// <param name="element">The element to add as a child. Must not already have a parent.</param>
     /// <exception cref="Exception">Thrown if <paramref name="element"/> already has a parent.</exception>
-    public void AddChild(Element element)
+    public virtual void AddChild(Element element)
     {
         if (element.Parent is not null)
         {
@@ -112,7 +113,7 @@ public abstract class Element
     /// Removes a child element from this element.
     /// </summary>
     /// <param name="element">The child element to remove.</param>
-    public void RemoveChild(Element element)
+    public virtual void RemoveChild(Element element)
     {
         _children.Remove(element);
         element.Parent = null;
@@ -146,7 +147,7 @@ public abstract class Element
     {
         return true;
     }
-    
+
     /// <summary>
     /// Renders this element and its children to the given surface.
     /// </summary>
@@ -177,73 +178,4 @@ public abstract class Element
         LayoutPropertyType.Height => HeightDefault,
         _ => throw new ArgumentOutOfRangeException(nameof(propertyType), propertyType, null)
     };
-}
-
-/// <summary>
-/// A container element that renders a bordered panel with an optional title.
-/// </summary>
-public sealed class PanelElement : Element
-{
-    /// <summary>The title displayed in the panel border.</summary>
-    public string Title { get; set; } = string.Empty;
-
-    /// <summary>When <see langword="true"/>, the panel is drawn with thin (single-line) borders instead of thick ones.</summary>
-    public bool ThinBorders = false;
-    
-    /// <inheritdoc/>
-    protected override void Render(ISurface surface)
-    {
-        surface.SubSurface(CalculatedLayout.X, CalculatedLayout.Y, CalculatedLayout.Width, CalculatedLayout.Height).Borders(Title, thin: ThinBorders);
-        base.Render(surface);
-    }
-}
-
-/// <summary>
-/// An element that renders a single line of styled text.
-/// </summary>
-public sealed class TextElement : Element
-{
-    /// <summary>The visual style applied to the text.</summary>
-    public Style Style { get; set; } = default;
-    /// <summary>The text content to render.</summary>
-    public string Text { get; set; } = string.Empty;
-    
-    // TODO: Text element is missing a lot of features, like text wrapping, proper size detection etc.
-    /// <inheritdoc/>
-    protected override void Render(ISurface surface)
-    {
-        for (int i = 0; i < Text.Length; i++)
-        {
-            surface.Write(Text[i], CalculatedLayout.X + i, CalculatedLayout.Y, Style);
-        }
-        base.Render(surface);
-    }
-
-    protected internal override List<LayoutProperty> ResolveAutoLayoutDependencies(LayoutPropertyType type)
-    {
-        if (type == LayoutPropertyType.Width)
-            return [new LayoutProperty(LayoutPropertyType.Width, Parent)];
-        if (type == LayoutPropertyType.Height)
-            return [new(LayoutPropertyType.Width, this)];
-        return [];
-    }
-
-    protected internal override int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
-    {
-        if (type == LayoutPropertyType.Width)
-        {
-            int value = int.Min(dependencies[0], Text.Length);
-            dependencies = dependencies[1..];
-            return value;
-        }
-        if (type == LayoutPropertyType.Height)
-        {
-            int width = dependencies[0];
-            dependencies = dependencies[1..];
-            // Integer division with rounding up.
-            return (Text.Length + width - 1) / width;
-        }
-
-        return 0;
-    }
 }

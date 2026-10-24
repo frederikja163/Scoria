@@ -6,4 +6,7 @@ internal interface IPlatformDriver
     void Restore();
     int PollInput(byte[] buffer, TimeSpan timeout);
     void Write(byte[] buffer);
+
+    int Width { get; }
+    int Height { get; }
 }

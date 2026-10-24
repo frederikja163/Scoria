@@ -72,7 +72,7 @@ public sealed class Window : Element
         {
             Height = Size.Abs(height);
         }
-        
+
         if (NeedsCalculateLayout)
         {
             NeedsCalculateLayout = false;
@@ -82,7 +82,7 @@ public sealed class Window : Element
         if (NeedsRender)
         {
             NeedsRender = false;
-            _surface = new Surface(width, height, Theme);
+            _surface = new Surface(CalculatedLayout.Width, CalculatedLayout.Height, Theme);
             Render(_surface);
         }
 
@@ -92,7 +92,7 @@ public sealed class Window : Element
     protected override void Render(ISurface surface)
     {
         surface.Fill(' ', Theme.Background);
-        surface.Borders(Title, false);
+        //surface.Borders(Title, false);
         base.Render(surface);
         surface.ExpandBorders();
     }

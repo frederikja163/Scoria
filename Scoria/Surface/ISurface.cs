@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Layout;
+
+namespace Scoria;
 
 /// <summary>
 /// Defines the contract for a rectangular grid of characters each with an associated <see cref="Style"/>.
@@ -39,6 +41,11 @@ public interface ISurface
 /// </summary>
 public static class SurfaceExtensions
 {
+    public static SubSurface SubSurface(this ISurface surface, CalculatedLayout layout, Theme? theme = null)
+    {
+        return SubSurface(surface, layout.X, layout.Y, layout.Width, layout.Height, theme ?? surface.Theme);
+    }
+
     /// <summary>Creates a <see cref="SubSurface"/> view into a rectangular region of this surface.</summary>
     /// <param name="surface">The parent surface.</param>
     /// <param name="offsetX">The X offset of the sub-surface within the parent.</param>

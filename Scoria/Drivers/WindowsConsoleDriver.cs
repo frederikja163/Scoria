@@ -31,6 +31,14 @@ internal sealed class WindowsConsoleDriver : IPlatformDriver
     private uint _originalOutputCp;
     private readonly Stream _stdout = Console.OpenStandardOutput();
 
+    public WindowsConsoleDriver()
+    {
+    }
+
+    // TODO: Implement this with more low level calls.
+    public int Width => Console.BufferWidth;
+    public int Height => Console.BufferHeight;
+
     [DllImport("kernel32.dll")]
     private static extern IntPtr GetStdHandle(int nStdHandle);
 

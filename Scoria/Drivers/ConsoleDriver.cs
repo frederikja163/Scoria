@@ -92,6 +92,13 @@ internal class ConsoleDriver : IConsoleDriver
 
     internal void PollInput(TimeSpan timeout)
     {
+        if (PlatformDriver.Width != _width || PlatformDriver.Height != _height)
+        {
+            _width = PlatformDriver.Width;
+            _height = PlatformDriver.Height;
+            OnEvent?.Invoke(new WindowResizeEventArgs(_width, _height));
+        }
+
         byte[] bytes = new byte[256];
         int length = PlatformDriver.PollInput(bytes, timeout);
         if (length > 0)
@@ -260,85 +267,85 @@ internal class ConsoleDriver : IConsoleDriver
 }
 
 internal enum Mode
-    {
-        KeyboardAction = 2,     // Keyboard Action Mode (AM)
-        Insert = 4,             // Insert Mode (IRM)
-        SendReceive = 12,       // Send/receive (SRM)
-        AutomaticNewline = 20,  // Automatic Newline (LNM)
-    }
+{
+    KeyboardAction = 2,     // Keyboard Action Mode (AM)
+    Insert = 4,             // Insert Mode (IRM)
+    SendReceive = 12,       // Send/receive (SRM)
+    AutomaticNewline = 20,  // Automatic Newline (LNM)
+}
 
-    internal enum PrivateMode
-    {
-        ApplicationCursorKeys = 1,      // Application Cursor Keys (DECCKM)
-        DesignateUSASCII = 2,           // Designate USASCII for character sets G0-G3 (DECANM), and set VT100 mode
-        Column132Mode = 3,              // 132 Column Mode (DECCOLM)
-        SmoothScroll = 4,               // Smooth (Slow) Scroll (DECSCLM)
-        ReverseVideo = 5,               // Reverse Video (DECSCNM)
-        OriginMode = 6,                 // Origin Mode (DECOM)
-        WraparoundMode = 7,             // Wraparound Mode (DECAWM)
-        AutoRepeatKeys = 8,             // Auto-repeat Keys (DECARM)
-        SendMouseOnPress = 9,           // Send Mouse X & Y on button press. See the section Mouse Tracking.
-        ShowToolbar = 10,               // Show toolbar (rxvt)
-        StartBlinkingCursor = 12,       // Start Blinking Cursor (att610)
-        PrintFormFeed = 18,             // Print form feed (DECPFF)
-        PrintExtentFullScreen = 19,     // Set print extent to full screen (DECPEX)
-        ShowCursor = 25,                // Show Cursor (DECTCEM). `Enable(ShowCursor, false)` hides it.
-        ShowScrollbar = 30,             // Show scrollbar (rxvt)
-        EnableFontShifting = 35,        // Enable font-shifting functions (rxvt)
-        EnterTektronixMode = 38,        // Enter Tektronix Mode (DECTEK)
-        Allow80To132Mode = 40,          // Allow 80 → 132 Mode
-        MoreFix = 41,                   // more(1) fix (see curses resource)
-        EnableNationReplacementChars = 42, // Enable Nation Replacement Character sets (DECNRCM)
-        MarginBell = 44,                // Turn On Margin Bell
-        ReverseWraparound = 45,         // Reverse-wraparound Mode
-        StartLogging = 46,              // Start Logging (normally disabled by a compile-time option)
-        UseAlternateScreenBuffer = 47,  // Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
-        ApplicationKeypad = 66,         // Application keypad (DECNKM)
-        BackarrowKeyBackspace = 67,     // Backarrow key sends backspace (DECBKM)
-        SendMouseOnPressRelease = 1000, // Send Mouse X & Y on button press and release. See the section Mouse Tracking.
-        HiliteMouseTracking = 1001,     // Use Hilite Mouse Tracking
-        ButtonEventMouse = 1002,        // Reports mouse button presses and drags. Use with SgrMouse for extended coordinates. Also known as Cell Motion Mouse Tracking.
-        AnyEventMouse = 1003,           // Reports all mouse motion events (not just clicks). Use sparingly — very noisy. Also known as All Motion Mouse Tracking.
-        FocusEvents = 1004,            // Sends CSI I / CSI O sequences when the terminal gains/loses focus.
-        SgrMouse = 1006,               // Enables SGR-encoded mouse events (coordinates > 223 supported). Usually combined with ButtonEventMouse.
-        ScrollToBottomTtyOutput = 1010, // Scroll to bottom on tty output (rxvt)
-        ScrollToBottomKeyPress = 1011,  // Scroll to bottom on key press (rxvt)
-        EnableSpecialModifiers = 1035,  // Enable special modifiers for Alt and NumLock keys
-        SendEscOnMeta = 1036,           // Send ESC when Meta modifies a key (enables the metaSendsEscape resource)
-        SendDelFromDelete = 1037,       // Send DEL from the editing-keypad Delete key
-        UseAlternateScreenBuffer2 = 1047, // Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
-        SaveCursor = 1048,              // Save cursor as in DECSC (unless disabled by the titeInhibit resource)
-        AlternateScreen = 1049,         // Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first (unless disabled by the titeInhibit resource). This combines the effects of 1047 and 1048.
-        SetSunFunctionKeyMode = 1051,   // Set Sun function-key mode
-        SetHPFunctionKeyMode = 1052,    // Set HP function-key mode
-        SetSCOFunctionKeyMode = 1053,   // Set SCO function-key mode
-        SetLegacyKeyboardEmulation = 1060, // Set legacy keyboard emulation (X11R6)
-        SetSunPCKeyboardEmulation = 1061, // Set Sun/PC keyboard emulation of VT220 keyboard
-        BracketedPaste = 2004,          // Set bracketed paste mode. Wraps pasted text in CSI 200~ / CSI 201~ so the app can distinguish paste from keystrokes.
-        WindowResize = 2048,            // Report text-area size changes. Sends CSI 48;height;width;height_px;width_px t immediately and on resize.
-    }
+internal enum PrivateMode
+{
+    ApplicationCursorKeys = 1,      // Application Cursor Keys (DECCKM)
+    DesignateUSASCII = 2,           // Designate USASCII for character sets G0-G3 (DECANM), and set VT100 mode
+    Column132Mode = 3,              // 132 Column Mode (DECCOLM)
+    SmoothScroll = 4,               // Smooth (Slow) Scroll (DECSCLM)
+    ReverseVideo = 5,               // Reverse Video (DECSCNM)
+    OriginMode = 6,                 // Origin Mode (DECOM)
+    WraparoundMode = 7,             // Wraparound Mode (DECAWM)
+    AutoRepeatKeys = 8,             // Auto-repeat Keys (DECARM)
+    SendMouseOnPress = 9,           // Send Mouse X & Y on button press. See the section Mouse Tracking.
+    ShowToolbar = 10,               // Show toolbar (rxvt)
+    StartBlinkingCursor = 12,       // Start Blinking Cursor (att610)
+    PrintFormFeed = 18,             // Print form feed (DECPFF)
+    PrintExtentFullScreen = 19,     // Set print extent to full screen (DECPEX)
+    ShowCursor = 25,                // Show Cursor (DECTCEM). `Enable(ShowCursor, false)` hides it.
+    ShowScrollbar = 30,             // Show scrollbar (rxvt)
+    EnableFontShifting = 35,        // Enable font-shifting functions (rxvt)
+    EnterTektronixMode = 38,        // Enter Tektronix Mode (DECTEK)
+    Allow80To132Mode = 40,          // Allow 80 → 132 Mode
+    MoreFix = 41,                   // more(1) fix (see curses resource)
+    EnableNationReplacementChars = 42, // Enable Nation Replacement Character sets (DECNRCM)
+    MarginBell = 44,                // Turn On Margin Bell
+    ReverseWraparound = 45,         // Reverse-wraparound Mode
+    StartLogging = 46,              // Start Logging (normally disabled by a compile-time option)
+    UseAlternateScreenBuffer = 47,  // Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
+    ApplicationKeypad = 66,         // Application keypad (DECNKM)
+    BackarrowKeyBackspace = 67,     // Backarrow key sends backspace (DECBKM)
+    SendMouseOnPressRelease = 1000, // Send Mouse X & Y on button press and release. See the section Mouse Tracking.
+    HiliteMouseTracking = 1001,     // Use Hilite Mouse Tracking
+    ButtonEventMouse = 1002,        // Reports mouse button presses and drags. Use with SgrMouse for extended coordinates. Also known as Cell Motion Mouse Tracking.
+    AnyEventMouse = 1003,           // Reports all mouse motion events (not just clicks). Use sparingly — very noisy. Also known as All Motion Mouse Tracking.
+    FocusEvents = 1004,            // Sends CSI I / CSI O sequences when the terminal gains/loses focus.
+    SgrMouse = 1006,               // Enables SGR-encoded mouse events (coordinates > 223 supported). Usually combined with ButtonEventMouse.
+    ScrollToBottomTtyOutput = 1010, // Scroll to bottom on tty output (rxvt)
+    ScrollToBottomKeyPress = 1011,  // Scroll to bottom on key press (rxvt)
+    EnableSpecialModifiers = 1035,  // Enable special modifiers for Alt and NumLock keys
+    SendEscOnMeta = 1036,           // Send ESC when Meta modifies a key (enables the metaSendsEscape resource)
+    SendDelFromDelete = 1037,       // Send DEL from the editing-keypad Delete key
+    UseAlternateScreenBuffer2 = 1047, // Use Alternate Screen Buffer (unless disabled by the titeInhibit resource)
+    SaveCursor = 1048,              // Save cursor as in DECSC (unless disabled by the titeInhibit resource)
+    AlternateScreen = 1049,         // Save cursor as in DECSC and use Alternate Screen Buffer, clearing it first (unless disabled by the titeInhibit resource). This combines the effects of 1047 and 1048.
+    SetSunFunctionKeyMode = 1051,   // Set Sun function-key mode
+    SetHPFunctionKeyMode = 1052,    // Set HP function-key mode
+    SetSCOFunctionKeyMode = 1053,   // Set SCO function-key mode
+    SetLegacyKeyboardEmulation = 1060, // Set legacy keyboard emulation (X11R6)
+    SetSunPCKeyboardEmulation = 1061, // Set Sun/PC keyboard emulation of VT220 keyboard
+    BracketedPaste = 2004,          // Set bracketed paste mode. Wraps pasted text in CSI 200~ / CSI 201~ so the app can distinguish paste from keystrokes.
+    WindowResize = 2048,            // Report text-area size changes. Sends CSI 48;height;width;height_px;width_px t immediately and on resize.
+}
 
-    internal enum GraphicsRendition
-    {
-        Reset = 0,
-        BoldOn = 1,
-        BoldOff = 22,
-        ItalicOn = 3,
-        ItalicOff = 23,
-        UnderlineOn = 4,
-        UnderlineOff = 24,
-        BlinkOn = 5,
-        BlinkOff = 25,
-        StrikethroughOn = 9,
-        StrikethroughOff = 29,
-        DoubleUnderlineOn = 21,
-        DoubleUnderlineOff = 24,
-        FramedOn = 51,
-        FramedOff = 54,
-        EncircledOn = 52,
-        EncircledOff = 54,
-        OverlinedOn = 53,
-        OverlinedOff = 55,
-        Foreground = 38,
-        Background = 48
-    }
+internal enum GraphicsRendition
+{
+    Reset = 0,
+    BoldOn = 1,
+    BoldOff = 22,
+    ItalicOn = 3,
+    ItalicOff = 23,
+    UnderlineOn = 4,
+    UnderlineOff = 24,
+    BlinkOn = 5,
+    BlinkOff = 25,
+    StrikethroughOn = 9,
+    StrikethroughOff = 29,
+    DoubleUnderlineOn = 21,
+    DoubleUnderlineOff = 24,
+    FramedOn = 51,
+    FramedOff = 54,
+    EncircledOn = 52,
+    EncircledOff = 54,
+    OverlinedOn = 53,
+    OverlinedOff = 55,
+    Foreground = 38,
+    Background = 48
+}
