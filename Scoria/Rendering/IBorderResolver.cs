@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Styling;
+
+namespace Scoria.Rendering;
 
 /// <summary>
 /// Defines how borders are drawn and expanded on a surface, as used by a <see cref="Theme"/>.

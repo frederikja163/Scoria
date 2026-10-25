@@ -3,6 +3,7 @@ using Scoria.Drivers.Providers;
 using Scoria.Elements;
 using Scoria.Events;
 using Scoria.Layout;
+using Scoria.Rendering;
 
 namespace Scoria;
 

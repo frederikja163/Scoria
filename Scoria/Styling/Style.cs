@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace Scoria;
+namespace Scoria.Styling;
 
 /// <summary>
 /// Flags that define text style attributes such as bold, italic, and underline.
@@ -34,7 +34,7 @@ public enum StyleAttributes : byte
 public struct Style() : IEquatable<Style>
 {
     /// <summary>Gets the default style: white foreground on an opaque black background with no attributes.</summary>
-    public static Style Default => new Style(255, 255, 255, 0, 0, 0, 255, Scoria.StyleAttributes.None);
+    public static Style Default => new Style(255, 255, 255, 0, 0, 0, 255, StyleAttributes.None);
     
     /// <summary>Red component of the foreground (text) color (0-255). Defaults to 255.</summary>
     public byte ForegroundRed { get; set; } = 255;

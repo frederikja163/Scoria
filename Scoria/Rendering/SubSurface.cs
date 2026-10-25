@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Styling;
+
+namespace Scoria.Rendering;
 
 /// <summary>
 /// Provides a view into a rectangular region of a parent <see cref="ISurface"/>.

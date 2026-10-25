@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Styling;
+
+namespace Scoria.Rendering;
 
 /// <summary>
 /// Represents a rectangular grid of characters each with an associated <see cref="Style"/>.

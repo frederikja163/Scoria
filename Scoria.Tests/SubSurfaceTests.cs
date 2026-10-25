@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using Scoria.Rendering;
+using Scoria.Styling;
 
 namespace Scoria.Tests;
 
@@ -76,81 +78,111 @@ public class SubSurfaceTests
     }
 
     [Test]
-    public void Write_NegativeX_ThrowsArgumentOutOfRangeException()
+    public void Write_NegativeX_ClampsToLeftEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.Write('A', -1, 0, new Style()));
+        sub.Write('A', -1, 0, new Style());
+
+        Assert.That(parent.GetChar(0, 0), Is.EqualTo('A'));
     }
 
     [Test]
-    public void Write_NegativeY_ThrowsArgumentOutOfRangeException()
+    public void Write_NegativeY_ClampsToTopEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.Write('A', 0, -1, new Style()));
+        sub.Write('A', 0, -1, new Style());
+
+        Assert.That(parent.GetChar(0, 0), Is.EqualTo('A'));
     }
 
     [Test]
-    public void Write_XEqualToWidth_ThrowsArgumentOutOfRangeException()
+    public void Write_XEqualToWidth_ClampsToRightEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.Write('A', 5, 0, new Style()));
+        sub.Write('A', 5, 0, new Style());
+
+        Assert.That(parent.GetChar(4, 0), Is.EqualTo('A'));
     }
 
     [Test]
-    public void Write_YEqualToHeight_ThrowsArgumentOutOfRangeException()
+    public void Write_YEqualToHeight_ClampsToBottomEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.Write('A', 0, 5, new Style()));
+        sub.Write('A', 0, 5, new Style());
+
+        Assert.That(parent.GetChar(0, 4), Is.EqualTo('A'));
     }
 
     [Test]
-    public void GetChar_NegativeX_ThrowsArgumentOutOfRangeException()
+    public void GetChar_NegativeX_ClampsToLeftEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
+        parent.Write('X', 0, 0, new Style());
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.GetChar(-1, 0));
+
+        Assert.That(sub.GetChar(-1, 0), Is.EqualTo('X'));
     }
 
     [Test]
-    public void GetChar_YEqualToHeight_ThrowsArgumentOutOfRangeException()
+    public void GetChar_YEqualToHeight_ClampsToBottomEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
+        parent.Write('Y', 0, 4, new Style());
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.GetChar(0, 5));
+
+        Assert.That(sub.GetChar(0, 5), Is.EqualTo('Y'));
     }
 
     [Test]
-    public void GetStyle_NegativeX_ThrowsArgumentOutOfRangeException()
+    public void GetStyle_NegativeX_ClampsToLeftEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
+        Style style = new Style(10, 20, 30, StyleAttributes.None);
+        parent.Write('X', 0, 0, style);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.GetStyle(-1, 0));
+
+        Style result = sub.GetStyle(-1, 0);
+        Assert.That(result.ForegroundRed, Is.EqualTo(10));
+        Assert.That(result.ForegroundGreen, Is.EqualTo(20));
+        Assert.That(result.ForegroundBlue, Is.EqualTo(30));
     }
 
     [Test]
-    public void GetStyle_XEqualToWidth_ThrowsArgumentOutOfRangeException()
+    public void GetStyle_XEqualToWidth_ClampsToRightEdge()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
+        Style style = new Style(10, 20, 30, StyleAttributes.None);
+        parent.Write('X', 4, 0, style);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
-        Assert.Throws<ArgumentOutOfRangeException>(() => sub.GetStyle(5, 0));
+
+        Style result = sub.GetStyle(5, 0);
+        Assert.That(result.ForegroundRed, Is.EqualTo(10));
+        Assert.That(result.ForegroundGreen, Is.EqualTo(20));
+        Assert.That(result.ForegroundBlue, Is.EqualTo(30));
     }
 
     [Test]
-    public void Constructor_NegativeOffsetX_ThrowsArgumentOutOfRangeException()
+    public void Constructor_NegativeOffsetX_ClampsToZero()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, -1, 0, 5, 5, parent.Theme));
+        SubSurface sub = new SubSurface(parent, -1, 0, 5, 5, parent.Theme);
+
+        Assert.That(sub.OffsetX, Is.EqualTo(0));
+        Assert.That(sub.Width, Is.EqualTo(5));
     }
 
     [Test]
-    public void Constructor_NegativeOffsetY_ThrowsArgumentOutOfRangeException()
+    public void Constructor_NegativeOffsetY_ClampsToZero()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, -1, 5, 5, parent.Theme));
+        SubSurface sub = new SubSurface(parent, 0, -1, 5, 5, parent.Theme);
+
+        Assert.That(sub.OffsetY, Is.EqualTo(0));
+        Assert.That(sub.Height, Is.EqualTo(5));
     }
 
     [Test]
@@ -166,31 +198,39 @@ public class SubSurfaceTests
     }
 
     [Test]
-    public void Constructor_ZeroWidth_ThrowsArgumentOutOfRangeException()
+    public void Constructor_ZeroWidth_ClampsToZero()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, 0, 0, 5, parent.Theme));
+        SubSurface sub = new SubSurface(parent, 0, 0, 0, 5, parent.Theme);
+
+        Assert.That(sub.Width, Is.EqualTo(0));
     }
 
     [Test]
-    public void Constructor_ZeroHeight_ThrowsArgumentOutOfRangeException()
+    public void Constructor_ZeroHeight_ClampsToZero()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, 0, 5, 0, parent.Theme));
+        SubSurface sub = new SubSurface(parent, 0, 0, 5, 0, parent.Theme);
+
+        Assert.That(sub.Height, Is.EqualTo(0));
     }
 
     [Test]
-    public void Constructor_SubSurfaceExceedsParentWidth_ThrowsArgumentOutOfRangeException()
+    public void Constructor_SubSurfaceExceedsParentWidth_ClampsToRemainingWidth()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 8, 0, 5, 5, parent.Theme));
+        SubSurface sub = new SubSurface(parent, 8, 0, 5, 5, parent.Theme);
+
+        Assert.That(sub.Width, Is.EqualTo(2));
     }
 
     [Test]
-    public void Constructor_SubSurfaceExceedsParentHeight_ThrowsArgumentOutOfRangeException()
+    public void Constructor_SubSurfaceExceedsParentHeight_ClampsToRemainingHeight()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Assert.Throws<ArgumentOutOfRangeException>(() => new SubSurface(parent, 0, 8, 5, 5, parent.Theme));
+        SubSurface sub = new SubSurface(parent, 0, 8, 5, 5, parent.Theme);
+
+        Assert.That(sub.Height, Is.EqualTo(2));
     }
 
     [Test]

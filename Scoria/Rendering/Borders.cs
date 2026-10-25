@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Styling;
+
+namespace Scoria.Rendering;
 
 public enum BorderStyle
 {

@@ -1,6 +1,7 @@
 ﻿using Scoria.Layout;
+using Scoria.Styling;
 
-namespace Scoria;
+namespace Scoria.Rendering;
 
 /// <summary>
 /// Defines the contract for a rectangular grid of characters each with an associated <see cref="Style"/>.
@@ -121,7 +122,7 @@ public static class SurfaceExtensions
     /// <param name="thin">When <see langword="true"/>, draws thin (single-line) borders instead of thick ones.</param>
     public static void Borders(this ISurface surface, string title = "", bool thin = false)
     {
-        char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
+        char borderCharacter = thin ? Scoria.Rendering.Borders.ThinBorderCharacter : Scoria.Rendering.Borders.ThickBorderCharacter;
 
         Style style = surface.Theme.Border.Style;
         for (int x = 0; x < surface.Width; x++)

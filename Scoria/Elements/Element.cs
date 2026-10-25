@@ -1,5 +1,6 @@
 ﻿using Scoria.Events;
 using Scoria.Layout;
+using Scoria.Rendering;
 
 namespace Scoria.Elements;
 

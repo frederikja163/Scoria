@@ -2,6 +2,7 @@
 using Scoria.Elements;
 using Scoria.Events;
 using Scoria.Layout;
+using Scoria.Styling;
 
 Style blackOnWhite = new Style(0, 0, 0, 255, 255, 255);
 

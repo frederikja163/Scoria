@@ -1,3 +1,6 @@
+using Scoria.Rendering;
+using Scoria.Styling;
+
 namespace Scoria.Elements;
 
 public sealed class SolidElement : Element

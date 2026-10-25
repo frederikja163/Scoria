@@ -1,4 +1,6 @@
 using NUnit.Framework;
+using Scoria.Rendering;
+using Scoria.Styling;
 
 namespace Scoria.Tests;
 

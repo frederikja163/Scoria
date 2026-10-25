@@ -1,6 +1,7 @@
-using Scoria;
 using Scoria.Elements;
 using Scoria.Layout;
+using Scoria.Styling;
+using Scoria.Rendering;
 
 public sealed class InsetElement : Element
 {

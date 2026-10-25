@@ -1,4 +1,6 @@
-﻿namespace Scoria;
+﻿using Scoria.Rendering;
+
+namespace Scoria.Styling;
 
 /// <summary>
 /// Defines the visual appearance of surfaces and windows, including border, title, and background styles.

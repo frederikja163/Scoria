@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Scoria;
+namespace Scoria.Styling;
 
 public abstract class ThemeBase<T> : ICloneable
     where T : ThemeBase<T>
