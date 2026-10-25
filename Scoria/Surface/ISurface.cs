@@ -123,20 +123,21 @@ public static class SurfaceExtensions
     {
         char borderCharacter = thin ? Scoria.Borders.ThinBorderCharacter : Scoria.Borders.ThickBorderCharacter;
 
+        Style style = surface.Theme.Border.Style;
         for (int x = 0; x < surface.Width; x++)
         {
-            surface.Write(borderCharacter, x, 0, surface.Theme.Border);
-            surface.Write(borderCharacter, x, surface.Height - 1, surface.Theme.Border);
+            surface.Write(borderCharacter, x, 0, style);
+            surface.Write(borderCharacter, x, surface.Height - 1, style);
         }
         for (int y = 0; y < surface.Height; y++)
         {
-            surface.Write(borderCharacter, 0, y, surface.Theme.Border);
-            surface.Write(borderCharacter, surface.Width - 1, y, surface.Theme.Border);
+            surface.Write(borderCharacter, 0, y, style);
+            surface.Write(borderCharacter, surface.Width - 1, y, style);
         }
 
         if (!string.IsNullOrEmpty(title))
         {
-            surface.Theme.Borders.WriteTitle(surface, title);
+            surface.Theme.Border.Resolver.WriteTitle(surface, title);
         }
     }
 
@@ -144,6 +145,6 @@ public static class SurfaceExtensions
     /// <param name="surface">The surface whose border cells are expanded in place.</param>
     public static void ExpandBorders(this ISurface surface)
     {
-        surface.Theme.Borders.ExpandBorders(surface);
+        surface.Theme.Border.Resolver.ExpandBorders(surface);
     }
 }

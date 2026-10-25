@@ -32,13 +32,18 @@ public sealed class TextElement : Element
         return [];
     }
 
-    protected internal override int ResolveAutoLayout(LayoutPropertyType type, List<int> dependencies)
+    protected internal override int ResolveAutoLayout(LayoutPropertyType type, ref ReadOnlySpan<int> dependencies)
     {
         if (type == LayoutPropertyType.Width)
-            return int.Min(dependencies[0], Text.Length);
+        {
+            int value = int.Min(dependencies[0], Text.Length);
+            dependencies = dependencies[1..];
+            return value;
+        }
         if (type == LayoutPropertyType.Height)
         {
             int width = dependencies[0];
+            dependencies = dependencies[1..];
             // Integer division with rounding up.
             return width == 0 ? 0 : (Text.Length + width - 1) / width;
         }

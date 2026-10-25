@@ -6,8 +6,8 @@
 /// </summary>
 public sealed class Surface : ISurface
 {
-    private char[,] _glyphs;
-    private Style[,] _styles;
+    private readonly char[,] _glyphs;
+    private readonly Style[,] _styles;
 
     /// <summary>Initializes a new <see cref="Surface"/> with the specified dimensions and theme.</summary>
     /// <param name="width">The width of the surface in character cells.</param>

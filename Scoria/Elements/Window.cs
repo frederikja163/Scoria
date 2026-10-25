@@ -91,7 +91,7 @@ public sealed class Window : Element
 
     protected override void Render(ISurface surface)
     {
-        surface.Fill(' ', Theme.Background);
+        surface.Fill(' ', Theme.BackgroundStyle);
         //surface.Borders(Title, false);
         base.Render(surface);
         surface.ExpandBorders();

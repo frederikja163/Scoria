@@ -3,7 +3,7 @@
 /// <summary>
 /// Defines how borders are drawn and expanded on a surface, as used by a <see cref="Theme"/>.
 /// </summary>
-public interface IBorders
+public interface IBorderResolver
 {
     /// <summary>Replaces placeholder border cells on the surface with the appropriate joined border glyphs.</summary>
     /// <param name="surface">The surface containing border cells to expand.</param>

@@ -8,11 +8,13 @@ public enum BorderStyle
 }
 
 /// <summary>
-/// Default <see cref="IBorders"/> implementation. Draws box-drawing borders by joining
+/// Default <see cref="IBorderResolver"/> implementation. Draws box-drawing borders by joining
 /// adjacent border cells into the appropriate corner, junction, and line glyphs.
 /// </summary>
-public sealed class Borders : IBorders
+public sealed class Borders : IBorderResolver
 {
+    private Borders() { }
+    public static IBorderResolver Instance { get; } = new Borders();
     private readonly char[] _borderCharacters =
     [
         ' ', '╶', '╺', ' ', '╵', '└', '┕', ' ', '╹', '┖', '┗', ' ', ' ', ' ', ' ', ' ', '╴', '─',
@@ -53,9 +55,10 @@ public sealed class Borders : IBorders
     public void WriteTitle(ISurface surface, string title)
     {
         // TODO Handle cases where the title is too long.
+        Style style = surface.Theme.Border.TitleStyle;
         for (int i = 0; i < title.Length; i++)
         {
-            surface.Write(title[i], 3 + i, 0, surface.Theme.Title);
+            surface.Write(title[i], 3 + i, 0, style);
         }
     }
 
@@ -96,3 +99,4 @@ public sealed class Borders : IBorders
         }
     }
 }
+

@@ -3,18 +3,40 @@
 /// <summary>
 /// Defines the visual appearance of surfaces and windows, including border, title, and background styles.
 /// </summary>
-public sealed class Theme
+public sealed class Theme : ThemeBase<Theme>
 {
     /// <summary>Gets or sets the theme used by default for new surfaces and windows.</summary>
     public static Theme Default { get; set; } = new Theme();
 
-    /// <summary>Gets or sets the border renderer used to draw and expand borders.</summary>
-    public IBorders Borders { get; set; } = new Borders();
+    private Theme() { }
+    private Theme(Theme original) : base(original) { }
+
+    public override Theme Clone()
+    {
+        return new Theme(this);
+    }
+
+    private readonly BorderTheme _border = new BorderTheme();
+    public BorderTheme Border { get => Get(_border.Clone, addIfNotFound: true); set => Set(value.Clone()); }
+
+    /// <summary>Gets or sets the style used to fill the window background.</summary>
+    public Style BackgroundStyle { get => Get(new Style(0, 0, 0, 20, 20, 20, 255)); set => Set(value); }
+}
+
+public sealed class BorderTheme : ThemeBase<BorderTheme>
+{
+    internal BorderTheme() { }
+    private BorderTheme(BorderTheme original) : base(original) { }
+
+    public IBorderResolver Resolver { get => Get(Borders.Instance); set => Set(value); }
 
     /// <summary>Gets or sets the style used to draw window and panel borders.</summary>
-    public Style Border { get; set; } = new Style(255, 255, 255, StyleAttributes.None);
+    public Style Style { get => Get(new Style(255, 255, 255, StyleAttributes.None)); set => Set(value); }
     /// <summary>Gets or sets the style used to draw border titles.</summary>
-    public Style Title { get; set; } = new Style(255, 255, 255, StyleAttributes.None);
-    /// <summary>Gets or sets the style used to fill the window background.</summary>
-    public Style Background { get; set; } = new Style(0, 0, 0, 20, 20, 20, 255);
+    public Style TitleStyle { get => Get(new Style(255, 255, 255, StyleAttributes.None)); set => Set(value); }
+
+    public override BorderTheme Clone()
+    {
+        return new BorderTheme(this);
+    }
 }
