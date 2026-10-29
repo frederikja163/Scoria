@@ -33,21 +33,8 @@ public enum StyleAttributes : byte
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
 public struct Style() : IEquatable<Style>
 {
-    /// <summary>Gets the default style: white foreground on an opaque black background with no attributes.</summary>
-    public static Style Default => new Style(255, 255, 255, 0, 0, 0, 255, StyleAttributes.None);
-    
-    /// <summary>Red component of the foreground (text) color (0-255). Defaults to 255.</summary>
-    public byte ForegroundRed { get; set; } = 255;
-    /// <summary>Green component of the foreground (text) color (0-255). Defaults to 255.</summary>
-    public byte ForegroundGreen { get; set; } = 255;
-    /// <summary>Blue component of the foreground (text) color (0-255). Defaults to 255.</summary>
-    public byte ForegroundBlue { get; set; } = 255;
-    /// <summary>Red component of the background color (0-255). Defaults to 0.</summary>
-    public byte BackgroundRed { get; set; }
-    /// <summary>Green component of the background color (0-255). Defaults to 0.</summary>
-    public byte BackgroundGreen { get; set; }
-    /// <summary>Blue component of the background color (0-255). Defaults to 0.</summary>
-    public byte BackgroundBlue { get; set; }
+    public Color Foreground { get; set; }
+    public Color Background { get; set; }
 
     /// <summary>Alpha (opacity) of the background color (0-255). Defaults to 255 (fully opaque).</summary>
     public byte Alpha { get; set; } = 255;
@@ -55,55 +42,35 @@ public struct Style() : IEquatable<Style>
     public StyleAttributes StyleAttributes { get; set; }
 
     /// <summary>
-    /// Initializes a new <see cref="Style"/> with the specified foreground and background colors and optional style attributes.
+    /// Initializes a new <see cref="Style"/> with the specified style attributes, using default white foreground and transparent background.
     /// </summary>
-    /// <param name="foregroundRed">Red component of the foreground color (0-255).</param>
-    /// <param name="foregroundGreen">Green component of the foreground color (0-255).</param>
-    /// <param name="foregroundBlue">Blue component of the foreground color (0-255).</param>
-    /// <param name="backgroundRed">Red component of the background color (0-255).</param>
-    /// <param name="backgroundGreen">Green component of the background color (0-255).</param>
-    /// <param name="backgroundBlue">Blue component of the background color (0-255).</param>
-    /// <param name="alpha">Alpha (opacity) of the background color (0-255).</param>
-    /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
-    public Style(byte foregroundRed, byte foregroundGreen, byte foregroundBlue,
-        byte backgroundRed, byte backgroundGreen, byte backgroundBlue, byte alpha = 255,
-        StyleAttributes styleAttributes = StyleAttributes.None) : this()
+    /// <param name="styleAttributes">Text style attributes to apply.</param>
+    public Style(StyleAttributes styleAttributes) : this(Color.White, styleAttributes)
     {
-        ForegroundRed = foregroundRed;
-        ForegroundGreen = foregroundGreen;
-        ForegroundBlue = foregroundBlue;
-        BackgroundRed = backgroundRed;
-        BackgroundGreen = backgroundGreen;
-        BackgroundBlue = backgroundBlue;
-        Alpha = alpha;
-        StyleAttributes = styleAttributes;
     }
 
     /// <summary>
     /// Initializes a new <see cref="Style"/> with the specified foreground color and optional style attributes, using a transparent background.
     /// </summary>
-    /// <param name="foregroundRed">Red component of the foreground color (0-255).</param>
-    /// <param name="foregroundGreen">Green component of the foreground color (0-255).</param>
-    /// <param name="foregroundBlue">Blue component of the foreground color (0-255).</param>
     /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
-    public Style(byte foregroundRed, byte foregroundGreen, byte foregroundBlue,
-        StyleAttributes styleAttributes = StyleAttributes.None) : this()
+    public Style(Color foreground, StyleAttributes styleAttributes = StyleAttributes.None) : this(foreground, Color.Black, 255, styleAttributes)
     {
-        ForegroundRed = foregroundRed;
-        ForegroundGreen = foregroundGreen;
-        ForegroundBlue = foregroundBlue;
-        StyleAttributes = styleAttributes;
     }
 
     /// <summary>
-    /// Initializes a new <see cref="Style"/> with the specified style attributes, using default white foreground and transparent background.
+    /// Initializes a new <see cref="Style"/> with the specified foreground and background colors and optional style attributes.
     /// </summary>
-    /// <param name="styleAttributes">Text style attributes to apply.</param>
-    public Style(StyleAttributes styleAttributes) : this()
+    /// <param name="alpha">Alpha (opacity) of the background color (0-255).</param>
+    /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
+    public Style(Color foreground, Color background, byte alpha = 255,
+        StyleAttributes styleAttributes = StyleAttributes.None) : this()
     {
+        Foreground = foreground;
+        Background = background;
+        Alpha = alpha;
         StyleAttributes = styleAttributes;
     }
-    
+
     /// <summary>Determines whether two <see cref="Style"/> instances are equal.</summary>
     /// <param name="left">The first style to compare.</param>
     /// <param name="right">The second style to compare.</param>
@@ -125,7 +92,7 @@ public struct Style() : IEquatable<Style>
     /// <summary>Indicates whether the current style is equal to another style.</summary>
     /// <param name="other">A style to compare with this style.</param>
     /// <returns><see langword="true"/> if the current style is equal to the <paramref name="other"/> parameter; otherwise <see langword="false"/>.</returns>
-    public bool Equals(Style other)
+    public readonly bool Equals(Style other)
     {
         return this == other;
     }
@@ -133,15 +100,15 @@ public struct Style() : IEquatable<Style>
     /// <summary>Indicates whether this instance and a specified object are equal.</summary>
     /// <param name="obj">The object to compare with the current instance.</param>
     /// <returns><see langword="true"/> if <paramref name="obj"/> is a <see cref="Style"/> and equal to this instance; otherwise <see langword="false"/>.</returns>
-    public override bool Equals(object? obj)
+    public readonly override bool Equals(object? obj)
     {
         return obj is Style other && Equals(other);
     }
 
     /// <summary>Returns the hash code for this style.</summary>
     /// <returns>A 32-bit signed integer hash code built from all color channels and style attributes.</returns>
-    public override int GetHashCode()
+    public readonly override int GetHashCode()
     {
-        return HashCode.Combine(ForegroundRed, ForegroundGreen, ForegroundBlue, BackgroundRed, BackgroundGreen, BackgroundBlue, Alpha, (int)StyleAttributes);
+        return HashCode.Combine(Foreground, Background, Alpha, (int)StyleAttributes);
     }
 }

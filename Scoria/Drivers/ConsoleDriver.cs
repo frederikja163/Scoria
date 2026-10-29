@@ -20,14 +20,14 @@ internal class ConsoleDriver : IConsoleDriver
     internal event Action<AnyEventArgs>? OnEvent;
 
 
-    private readonly StringBuilder Buffer = new StringBuilder();
-    private Style _currentStyle = new Style();
+    private readonly StringBuilder Buffer = new();
+    private Style _currentStyle = new();
     private int _width;
     private int _height;
 
     internal ConsoleDriver(params IInputProvider[] providers)
     {
-        IPlatformDriver CreatePlatform()
+        static IPlatformDriver CreatePlatform()
         {
             if (OperatingSystem.IsLinux())
             {
@@ -192,26 +192,18 @@ internal class ConsoleDriver : IConsoleDriver
             GraphicsRendition.DoubleUnderlineOff);
         ApplyAttribute(StyleAttributes.Overline, GraphicsRendition.OverlinedOn, GraphicsRendition.OverlinedOff);
 
-        if (style.ForegroundRed != _currentStyle.ForegroundRed ||
-            style.ForegroundGreen != _currentStyle.ForegroundGreen ||
-            style.ForegroundBlue != _currentStyle.ForegroundBlue)
+        if (style.Foreground != _currentStyle.Foreground)
         {
             SelectGraphicsRendition(GraphicsRendition.Foreground, 2,
-                style.ForegroundRed, style.ForegroundGreen, style.ForegroundBlue);
-            _currentStyle.ForegroundRed = style.ForegroundRed;
-            _currentStyle.ForegroundGreen = style.ForegroundGreen;
-            _currentStyle.ForegroundBlue = style.ForegroundBlue;
+                style.Foreground.R, style.Foreground.G, style.Foreground.B);
+            _currentStyle.Foreground = style.Foreground;
         }
 
-        if (style.BackgroundRed != _currentStyle.BackgroundRed ||
-            style.BackgroundGreen != _currentStyle.BackgroundGreen ||
-            style.BackgroundBlue != _currentStyle.BackgroundBlue)
+        if (style.Background != _currentStyle.Background)
         {
             SelectGraphicsRendition(GraphicsRendition.Background, 2,
-                style.BackgroundRed, style.BackgroundGreen, style.BackgroundBlue);
-            _currentStyle.BackgroundRed = style.BackgroundRed;
-            _currentStyle.BackgroundGreen = style.BackgroundGreen;
-            _currentStyle.BackgroundBlue = style.BackgroundBlue;
+                style.Background.R, style.Background.G, style.Background.B);
+            _currentStyle.Background = style.Background;
         }
 
         void ApplyAttribute(StyleAttributes styleAttribute, GraphicsRendition on, GraphicsRendition off)

@@ -22,7 +22,7 @@ public sealed class Theme : ThemeBase<Theme>
     public BorderTheme Border { get => Get(_border.Clone, addIfNotFound: true); set => Set(value.Clone()); }
 
     /// <summary>Gets or sets the style used to fill the window background.</summary>
-    public Style BackgroundStyle { get => Get(new Style(0, 0, 0, 20, 20, 20, 255)); set => Set(value); }
+    public Color BackgroundColor { get => Get(Color.Black); set => Set(value); }
 }
 
 public sealed class BorderTheme : ThemeBase<BorderTheme>
@@ -33,9 +33,9 @@ public sealed class BorderTheme : ThemeBase<BorderTheme>
     public IBorderResolver Resolver { get => Get(Borders.Instance); set => Set(value); }
 
     /// <summary>Gets or sets the style used to draw window and panel borders.</summary>
-    public Style Style { get => Get(new Style(255, 255, 255, StyleAttributes.None)); set => Set(value); }
+    public Style Style { get => Get(new Style(Color.White)); set => Set(value); }
     /// <summary>Gets or sets the style used to draw border titles.</summary>
-    public Style TitleStyle { get => Get(new Style(255, 255, 255, StyleAttributes.None)); set => Set(value); }
+    public Style TitleStyle { get => Get(new Style(Color.White)); set => Set(value); }
 
     public override BorderTheme Clone()
     {

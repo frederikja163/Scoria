@@ -46,9 +46,7 @@ public sealed class Surface : ISurface
             float blendNew = style.Alpha / 255f;
             float blendOld = 1 - blendNew;
             Style oldStyle = _styles[x, y];
-            style.BackgroundRed = (byte)(style.BackgroundRed * blendNew + oldStyle.BackgroundRed * blendOld);
-            style.BackgroundBlue = (byte)(style.BackgroundBlue * blendNew + oldStyle.BackgroundBlue * blendOld);
-            style.BackgroundGreen = (byte)(style.BackgroundGreen * blendNew + oldStyle.BackgroundGreen * blendOld);
+            style.Background = style.Background * blendNew + oldStyle.Background * blendOld;
         }
         _styles[x, y] = style;
     }

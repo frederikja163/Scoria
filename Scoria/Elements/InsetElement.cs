@@ -37,7 +37,7 @@ public sealed class InsetElement : Element
 
         protected override void Render(ISurface surface)
         {
-            surface.SubSurface(CalculatedLayout).Fill(' ', _element.InnerStyle);
+            surface.SubSurface(CalculatedLayout).Fill(' ', new(_element.InnerColor));
             base.Render(surface);
         }
     }
@@ -61,8 +61,8 @@ public sealed class InsetElement : Element
         TopInset = topInset;
     }
 
-    public Style OuterStyle { get; set { field = value; SetNeedsRender(); } }
-    public Style InnerStyle { get; set { field = value; SetNeedsRender(); } }
+    public Color OuterColor { get; set { field = value; SetNeedsRender(); } }
+    public Color InnerColor { get; set { field = value; SetNeedsRender(); } }
 
     public int LeftInset
     {
@@ -88,7 +88,7 @@ public sealed class InsetElement : Element
 
     protected override void Render(ISurface surface)
     {
-        surface.SubSurface(CalculatedLayout).Fill(' ', OuterStyle);
+        surface.SubSurface(CalculatedLayout).Fill(' ', new(OuterColor));
         base.Render(surface);
     }
 }

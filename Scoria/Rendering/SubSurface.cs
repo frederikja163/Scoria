@@ -56,7 +56,7 @@ public sealed class SubSurface : ISurface
     public Style GetStyle(int x, int y)
     {
         if (Width <= 0 || Height <= 0)
-            return Style.Default;
+            return default;
         x = Math.Clamp(x, 0, Width - 1);
         y = Math.Clamp(y, 0, Height - 1);
         return _parent.GetStyle(x + OffsetX, y + OffsetY);
