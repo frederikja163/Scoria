@@ -5,7 +5,6 @@ using Scoria.Layout;
 using Scoria.Styling;
 
 var window = new Window { Title = "Scoria Layout Demo" };
-//window.AddChild(new SolidElement() { Char = '#', Style = blackOnWhite });
 
 GridElement element = new GridElement(2, 2)
 {
@@ -14,8 +13,8 @@ GridElement element = new GridElement(2, 2)
     FillMethod = GridFillMethod.ColumnThenRow,
 };
 
-element.AddChild(new InsetElement(1) { InnerColor = Color.White, OuterColor = Color.White }, 1..2, 0..1);
-//window.AddChild(element);
+element.AddChild(new InsetElement(10) { InnerColor = Color.White, OuterColor = Color.Blue, InnerAlpha = 100 }, 1..2, 0..1);
+window.AddChild(element);
 
 
 var app = new Application(new ApplicationOptions { Window = window });

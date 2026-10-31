@@ -37,7 +37,7 @@ public sealed class InsetElement : Element
 
         protected override void Render(ISurface surface)
         {
-            surface.SubSurface(CalculatedLayout).Fill(' ', new(_element.InnerColor));
+            surface.SubSurface(CalculatedLayout).Fill(_element.InnerColor, _element.InnerAlpha);
             base.Render(surface);
         }
     }
@@ -63,6 +63,8 @@ public sealed class InsetElement : Element
 
     public Color OuterColor { get; set { field = value; SetNeedsRender(); } }
     public Color InnerColor { get; set { field = value; SetNeedsRender(); } }
+    public byte OuterAlpha { get; set { field = value; SetNeedsRender(); } } = 255;
+    public byte InnerAlpha { get; set { field = value; SetNeedsRender(); } } = 255;
 
     public int LeftInset
     {
@@ -88,7 +90,7 @@ public sealed class InsetElement : Element
 
     protected override void Render(ISurface surface)
     {
-        surface.SubSurface(CalculatedLayout).Fill(' ', new(OuterColor));
+        surface.SubSurface(CalculatedLayout).Fill(OuterColor, OuterAlpha);
         base.Render(surface);
     }
 }

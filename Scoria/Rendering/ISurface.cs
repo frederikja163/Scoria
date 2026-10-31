@@ -77,7 +77,6 @@ public static class SurfaceExtensions
     /// <param name="style">The style to apply to every cell in the region.</param>
     public static void Fill(this ISurface surface, char c, Style style)
     {
-        style = new Style(default, Color.White);
         for (int x = 0; x < surface.Width; x++)
         {
             for (int y = 0; y < surface.Height; y++)
@@ -85,6 +84,16 @@ public static class SurfaceExtensions
                 surface.Write(c, x, y, style);
             }
         }
+    }
+
+    public static void Fill(this ISurface surface, char c, Color foreground)
+    {
+        Fill(surface, c, new Style(foreground, Color.Black, alpha: 0));
+    }
+
+    public static void Fill(this ISurface surface, Color background, byte alpha = 255)
+    {
+        Fill(surface, ' ', new Style(Color.White, background, alpha));
     }
 
     /// <summary>Writes another surface onto this surface at the specified offset.

@@ -142,6 +142,7 @@ internal class ConsoleDriver : IConsoleDriver
         int height = Math.Min(surface.Height, _height);
         SelectGraphicsRendition(GraphicsRendition.Reset);
         _currentStyle = new Style();
+        ApplyStyle(_currentStyle, true);
         for (int y = 0; y < height; y++)
         {
             if (y != 0)
@@ -177,9 +178,9 @@ internal class ConsoleDriver : IConsoleDriver
         Write('E');
     }
 
-    private void ApplyStyle(Style style)
+    private void ApplyStyle(Style style, bool force = false)
     {
-        if (_currentStyle == style)
+        if (!force && _currentStyle == style)
             return;
 
         ApplyAttribute(StyleAttributes.Bold, GraphicsRendition.BoldOn, GraphicsRendition.BoldOff);
@@ -192,14 +193,14 @@ internal class ConsoleDriver : IConsoleDriver
             GraphicsRendition.DoubleUnderlineOff);
         ApplyAttribute(StyleAttributes.Overline, GraphicsRendition.OverlinedOn, GraphicsRendition.OverlinedOff);
 
-        if (style.Foreground != _currentStyle.Foreground)
+        if (force || style.Foreground != _currentStyle.Foreground)
         {
             SelectGraphicsRendition(GraphicsRendition.Foreground, 2,
                 style.Foreground.R, style.Foreground.G, style.Foreground.B);
             _currentStyle.Foreground = style.Foreground;
         }
 
-        if (style.Background != _currentStyle.Background)
+        if (force || style.Background != _currentStyle.Background)
         {
             SelectGraphicsRendition(GraphicsRendition.Background, 2,
                 style.Background.R, style.Background.G, style.Background.B);
@@ -208,7 +209,7 @@ internal class ConsoleDriver : IConsoleDriver
 
         void ApplyAttribute(StyleAttributes styleAttribute, GraphicsRendition on, GraphicsRendition off)
         {
-            if (style.StyleAttributes.HasFlag(styleAttribute) != _currentStyle.StyleAttributes.HasFlag(styleAttribute))
+            if (force || style.StyleAttributes.HasFlag(styleAttribute) != _currentStyle.StyleAttributes.HasFlag(styleAttribute))
             {
                 SelectGraphicsRendition(style.StyleAttributes.HasFlag(styleAttribute) ? on : off);
                 _currentStyle.StyleAttributes ^= styleAttribute;
