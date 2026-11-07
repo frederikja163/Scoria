@@ -209,10 +209,15 @@ internal class ConsoleDriver : IConsoleDriver
 
         void ApplyAttribute(StyleAttributes styleAttribute, GraphicsRendition on, GraphicsRendition off)
         {
-            if (force || style.StyleAttributes.HasFlag(styleAttribute) != _currentStyle.StyleAttributes.HasFlag(styleAttribute))
+            bool newValue = style.StyleAttributes.HasFlag(styleAttribute);
+            bool currentValue = _currentStyle.StyleAttributes.HasFlag(styleAttribute);
+            if (newValue != currentValue)
             {
-                SelectGraphicsRendition(style.StyleAttributes.HasFlag(styleAttribute) ? on : off);
                 _currentStyle.StyleAttributes ^= styleAttribute;
+            }
+            if (force || newValue != currentValue)
+            {
+                SelectGraphicsRendition(_currentStyle.StyleAttributes.HasFlag(styleAttribute) ? on : off);
             }
         }
     }

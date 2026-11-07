@@ -27,6 +27,7 @@ public enum StyleAttributes : byte
     Overline = 1 << 6,
 }
 
+// Note: Style is specifically packed to 8 bytes so it can be compared using long == long. See the .Equals method.
 /// <summary>
 /// Defines the visual style for terminal output, including foreground and background colors and text attributes.
 /// </summary>
