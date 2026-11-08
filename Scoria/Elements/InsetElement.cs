@@ -63,8 +63,8 @@ public sealed class InsetElement : Element
 
     public Color OuterColor { get; set { field = value; SetNeedsRender(); } }
     public Color InnerColor { get; set { field = value; SetNeedsRender(); } }
-    public byte OuterAlpha { get; set { field = value; SetNeedsRender(); } } = 255;
-    public byte InnerAlpha { get; set { field = value; SetNeedsRender(); } } = 255;
+    public byte OuterAlpha { get; set { field = value; SetNeedsRender(); } } = Style.MaxAlpha;
+    public byte InnerAlpha { get; set { field = value; SetNeedsRender(); } } = Style.MaxAlpha;
 
     public int LeftInset
     {

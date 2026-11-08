@@ -34,11 +34,14 @@ public enum StyleAttributes : byte
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
 public struct Style() : IEquatable<Style>
 {
+    public const byte MaxAlpha = byte.MaxValue;
+    public const byte MinAlpha = 0;
+
     public Color Foreground { get; set; }
     public Color Background { get; set; }
 
     /// <summary>Alpha (opacity) of the background color (0-255). Defaults to 255 (fully opaque).</summary>
-    public byte Alpha { get; set; } = 255;
+    public byte Alpha { get; set; } = MaxAlpha;
     /// <summary>Text style attributes (bold, italic, underline, etc.).</summary>
     public StyleAttributes StyleAttributes { get; set; }
 
@@ -54,7 +57,7 @@ public struct Style() : IEquatable<Style>
     /// Initializes a new <see cref="Style"/> with the specified foreground color and optional style attributes, using a transparent background.
     /// </summary>
     /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
-    public Style(Color foreground, StyleAttributes styleAttributes = StyleAttributes.None) : this(foreground, Color.Black, 255, styleAttributes)
+    public Style(Color foreground, StyleAttributes styleAttributes = StyleAttributes.None) : this(foreground, Color.Black, MaxAlpha, styleAttributes)
     {
     }
 
@@ -63,7 +66,7 @@ public struct Style() : IEquatable<Style>
     /// </summary>
     /// <param name="alpha">Alpha (opacity) of the background color (0-255).</param>
     /// <param name="styleAttributes">Text style attributes. Defaults to <see cref="StyleAttributes.None"/>.</param>
-    public Style(Color foreground, Color background, byte alpha = 255,
+    public Style(Color foreground, Color background, byte alpha = MaxAlpha,
         StyleAttributes styleAttributes = StyleAttributes.None) : this()
     {
         Foreground = foreground;

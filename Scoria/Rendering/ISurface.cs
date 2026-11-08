@@ -88,10 +88,10 @@ public static class SurfaceExtensions
 
     public static void Fill(this ISurface surface, char c, Color foreground)
     {
-        Fill(surface, c, new Style(foreground, Color.Black, alpha: 0));
+        Fill(surface, c, new Style(foreground, Color.Black, alpha: Style.MinAlpha));
     }
 
-    public static void Fill(this ISurface surface, Color background, byte alpha = 255)
+    public static void Fill(this ISurface surface, Color background, byte alpha = Style.MaxAlpha)
     {
         Fill(surface, ' ', new Style(Color.White, background, alpha));
     }

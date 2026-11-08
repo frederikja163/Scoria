@@ -41,9 +41,9 @@ public sealed class Surface : ISurface
         y = Math.Clamp(y, 0, Height - 1);
 
         _glyphs[x, y] = c;
-        if (style.Alpha != byte.MaxValue)
+        if (style.Alpha != Style.MaxAlpha)
         {
-            float blendNew = style.Alpha / 255f;
+            float blendNew = style.Alpha / (float)Style.MaxAlpha;
             float blendOld = 1 - blendNew;
             Style oldStyle = _styles[x, y];
             style.Background = style.Background * blendNew + oldStyle.Background * blendOld;
