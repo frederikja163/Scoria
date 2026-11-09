@@ -85,15 +85,19 @@ public static class SurfaceExtensions
             }
         }
     }
-
-    public static void Fill(this ISurface surface, char c, Color foreground)
+    public static void Fill(this ISurface surface, char c, Color foreground, Color background, byte alpha = Style.MaxAlpha, StyleAttributes styleAttributes = StyleAttributes.None)
     {
-        Fill(surface, c, new Style(foreground, Color.Black, alpha: Style.MinAlpha));
+        Fill(surface, c, new Style(foreground, background, alpha, styleAttributes));
+    }
+
+    public static void Fill(this ISurface surface, char c, Color foreground, StyleAttributes styleAttributes = StyleAttributes.None)
+    {
+        surface.Fill(c, foreground, Color.Black, Style.MinAlpha, styleAttributes: styleAttributes);
     }
 
     public static void Fill(this ISurface surface, Color background, byte alpha = Style.MaxAlpha)
     {
-        Fill(surface, ' ', new Style(Color.White, background, alpha));
+        surface.Fill(Surface.BackgroundCharacter, background, background, alpha);
     }
 
     /// <summary>Writes another surface onto this surface at the specified offset.
@@ -102,7 +106,7 @@ public static class SurfaceExtensions
     /// <param name="source">The target surface to write from.</param>
     /// <param name="xOffset">The X offset on the target surface where the source will be placed.</param>
     /// <param name="yOffset">The Y offset on the target surface where the source will be placed.</param>
-    public static void Write(this ISurface target, ISurface source, int xOffset, int yOffset)
+    public static void Write(this ISurface target, ISurface source, int xOffset, int yOffset, byte alpha = Style.MaxAlpha)
     {
         int w = Math.Min(xOffset + source.Width, target.Width);
         int h = Math.Min(yOffset + source.Height, target.Height);
@@ -111,9 +115,26 @@ public static class SurfaceExtensions
         {
             for (int y = Math.Max(yOffset, 0); y < h; y++)
             {
-                target.Write(source.GetChar(x - xOffset, y - yOffset), x, y, source.GetStyle(x - xOffset, y - yOffset));
+                char c = source.GetChar(x - xOffset, y - yOffset);
+                Style style = source.GetStyle(x - xOffset, y - yOffset) with { Alpha = alpha };
+                target.Write(c, x, y, style);
             }
         }
+    }
+
+    public static void Write(this ISurface target, char c, int x, int y, Color foreground, Color background, byte alpha = Style.MaxAlpha, StyleAttributes styleAttributes = StyleAttributes.None)
+    {
+        target.Write(c, x, y, new Style(foreground, background, alpha, styleAttributes));
+    }
+
+    public static void Write(this ISurface target, char c, int x, int y, Color foreground, StyleAttributes styleAttributes = StyleAttributes.None)
+    {
+        target.Write(c, x, y, foreground, Color.Black, Style.MinAlpha, styleAttributes: styleAttributes);
+    }
+
+    public static void Write(this ISurface target, int x, int y, Color background, byte alpha = Style.MaxAlpha)
+    {
+        target.Write(Surface.BackgroundCharacter, x, y, background, background, alpha);
     }
 
     /// <summary>Determines whether the specified position lies within the bounds of the surface.</summary>

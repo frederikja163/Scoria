@@ -1,13 +1,24 @@
 namespace Scoria.Styling;
 
-public struct Color(byte red, byte green, byte blue) : IEquatable<Color>
+public readonly struct Color(byte red, byte green, byte blue) : IEquatable<Color>
 {
-    public byte R { get; set; } = red;
-    public byte G { get; set; } = green;
-    public byte B { get; set; } = blue;
+    public byte R { get; } = red;
+    public byte G { get; } = green;
+    public byte B { get; } = blue;
 
     public Color(byte gray) : this(gray, gray, gray)
     {
+    }
+
+    public Color Blend(Color underneath, byte alpha)
+    {
+        byte alphaThis = alpha;
+        byte alphaOther = (byte)(Style.MaxAlpha - alpha);
+        return new Color(
+                (byte)((R * alphaThis + underneath.R * alphaOther + Style.HalfAlpha) / Style.MaxAlpha),
+                (byte)((G * alphaThis + underneath.G * alphaOther + Style.HalfAlpha) / Style.MaxAlpha),
+                (byte)((B * alphaThis + underneath.B * alphaOther + Style.HalfAlpha) / Style.MaxAlpha)
+                );
     }
 
     public static Color operator +(Color left, Color right)

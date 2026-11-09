@@ -153,7 +153,8 @@ internal class ConsoleDriver : IConsoleDriver
             for (int x = 0; x < width; x++)
             {
                 ApplyStyle(surface.GetStyle(x, y));
-                Write(surface.GetChar(x, y));
+                char c = surface.GetChar(x, y);
+                Write(c == Surface.BackgroundCharacter ? ' ' : c);
             }
         }
     }

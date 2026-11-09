@@ -8,6 +8,7 @@ namespace Scoria.Rendering;
 /// </summary>
 public sealed class Surface : ISurface
 {
+    public const char BackgroundCharacter = '\0';
     private readonly char[,] _glyphs;
     private readonly Style[,] _styles;
 
@@ -40,14 +41,23 @@ public sealed class Surface : ISurface
         x = Math.Clamp(x, 0, Width - 1);
         y = Math.Clamp(y, 0, Height - 1);
 
-        _glyphs[x, y] = c;
         if (style.Alpha != Style.MaxAlpha)
         {
-            float blendNew = style.Alpha / (float)Style.MaxAlpha;
-            float blendOld = 1 - blendNew;
-            Style oldStyle = _styles[x, y];
-            style.Background = style.Background * blendNew + oldStyle.Background * blendOld;
+            Style oldStyle = GetStyle(x, y);
+            style.Background = style.Background.Blend(oldStyle.Background, style.Alpha);
+
+            if (c == BackgroundCharacter)
+            {
+                char oldCharacter = GetChar(x, y);
+                c = oldCharacter;
+                style.Foreground = style.Foreground.Blend(oldStyle.Foreground, style.Alpha);
+                style.StyleAttributes = oldStyle.StyleAttributes;
+            }
+
+            style.Alpha = Style.MaxAlpha;
         }
+
+        _glyphs[x, y] = c;
         _styles[x, y] = style;
     }
 

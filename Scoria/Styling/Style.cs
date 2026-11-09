@@ -35,6 +35,7 @@ public enum StyleAttributes : byte
 public struct Style() : IEquatable<Style>
 {
     public const byte MaxAlpha = byte.MaxValue;
+    public const byte HalfAlpha = MaxAlpha / 2;
     public const byte MinAlpha = 0;
 
     public Color Foreground { get; set; }
