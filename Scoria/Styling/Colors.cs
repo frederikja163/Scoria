@@ -1,15 +1,27 @@
 namespace Scoria.Styling;
 
+/// <summary>
+/// Represents a 24-bit RGB color with red, green, and blue channels.
+/// </summary>
 public readonly struct Color(byte red, byte green, byte blue) : IEquatable<Color>
 {
+    /// <summary>Gets the red channel value.</summary>
     public byte R { get; } = red;
+    /// <summary>Gets the green channel value.</summary>
     public byte G { get; } = green;
+    /// <summary>Gets the blue channel value.</summary>
     public byte B { get; } = blue;
 
+    /// <summary>Initializes a new <see cref="Color"/> with equal red, green, and blue channels.</summary>
+    /// <param name="gray">The value applied to all three channels.</param>
     public Color(byte gray) : this(gray, gray, gray)
     {
     }
 
+    /// <summary>Blends this color over another color using the given opacity.</summary>
+    /// <param name="underneath">The color to blend over.</param>
+    /// <param name="alpha">The opacity (0-255) of this color; the remainder is taken from <paramref name="underneath"/>.</param>
+    /// <returns>The resulting blended color.</returns>
     public Color Blend(Color underneath, byte alpha)
     {
         byte alphaThis = alpha;
@@ -21,47 +33,61 @@ public readonly struct Color(byte red, byte green, byte blue) : IEquatable<Color
                 );
     }
 
+    /// <summary>Adds the corresponding channels of two colors together.</summary>
     public static Color operator +(Color left, Color right)
     {
         return new((byte)(left.R + right.R), (byte)(left.G + right.G), (byte)(left.B + right.B));
     }
 
+    /// <summary>Subtracts the corresponding channels of the right color from the left color.</summary>
     public static Color operator -(Color left, Color right)
     {
         return new((byte)(left.R - right.R), (byte)(left.G - right.G), (byte)(left.B - right.B));
 
     }
 
+    /// <summary>Scales each channel of a color by a factor.</summary>
     public static Color operator *(Color color, float factor)
     {
         return new((byte)(color.R * factor), (byte)(color.G * factor), (byte)(color.B * factor));
     }
 
+    /// <summary>Scales each channel of a color by a factor.</summary>
     public static Color operator *(float factor, Color color)
     {
         return color * factor;
     }
 
+    /// <summary>Determines whether two colors are equal.</summary>
     public static bool operator ==(Color left, Color right)
     {
         return left.R == right.R && left.G == right.G && left.B == right.B;
     }
 
+    /// <summary>Determines whether two colors are not equal.</summary>
     public static bool operator !=(Color left, Color right)
     {
         return !(left == right);
     }
 
+    /// <summary>Indicates whether the current color is equal to another color.</summary>
+    /// <param name="other">A color to compare with this color.</param>
+    /// <returns><see langword="true"/> if the current color is equal to the <paramref name="other"/> parameter; otherwise <see langword="false"/>.</returns>
     public readonly bool Equals(Color other)
     {
         return this == other;
     }
 
+    /// <summary>Indicates whether this instance and a specified object are equal.</summary>
+    /// <param name="obj">The object to compare with the current instance.</param>
+    /// <returns><see langword="true"/> if <paramref name="obj"/> is a <see cref="Color"/> and equal to this instance; otherwise <see langword="false"/>.</returns>
     public readonly override bool Equals(object? obj)
     {
         return obj is Color other && Equals(other);
     }
 
+    /// <summary>Returns the hash code for this color.</summary>
+    /// <returns>A 32-bit signed integer hash code built from the three color channels.</returns>
     public readonly override int GetHashCode()
     {
         return HashCode.Combine(R, G, B);

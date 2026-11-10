@@ -35,30 +35,24 @@ public sealed class SubSurface : ISurface
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {
-        if (Width <= 0 || Height <= 0)
+        if (!this.Contains(x, y))
             return;
-        x = Math.Clamp(x, 0, Width - 1);
-        y = Math.Clamp(y, 0, Height - 1);
         _parent.Write(c, x + OffsetX, y + OffsetY, style);
     }
 
     /// <inheritdoc />
     public char GetChar(int x, int y)
     {
-        if (Width <= 0 || Height <= 0)
+        if (!this.Contains(x, y))
             return (char)0;
-        x = Math.Clamp(x, 0, Width - 1);
-        y = Math.Clamp(y, 0, Height - 1);
         return _parent.GetChar(x + OffsetX, y + OffsetY);
     }
 
     /// <inheritdoc />
     public Style GetStyle(int x, int y)
     {
-        if (Width <= 0 || Height <= 0)
+        if (!this.Contains(x, y))
             return default;
-        x = Math.Clamp(x, 0, Width - 1);
-        y = Math.Clamp(y, 0, Height - 1);
         return _parent.GetStyle(x + OffsetX, y + OffsetY);
     }
 }

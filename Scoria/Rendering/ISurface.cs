@@ -42,6 +42,11 @@ public interface ISurface
 /// </summary>
 public static class SurfaceExtensions
 {
+    /// <summary>Creates a <see cref="SubSurface"/> view into the region described by a <see cref="CalculatedLayout"/>.</summary>
+    /// <param name="surface">The parent surface.</param>
+    /// <param name="layout">The position and size of the sub-surface within the parent.</param>
+    /// <param name="theme">The theme for the sub-surface. Defaults to the parent's theme.</param>
+    /// <returns>A <see cref="SubSurface"/> that maps to the specified region of the parent surface.</returns>
     public static SubSurface SubSurface(this ISurface surface, CalculatedLayout layout, Theme? theme = null)
     {
         return SubSurface(surface, layout.X, layout.Y, layout.Width, layout.Height, theme ?? surface.Theme);
@@ -85,16 +90,32 @@ public static class SurfaceExtensions
             }
         }
     }
+    /// <summary>Fills the entire surface with the specified character, colors, and style attributes.</summary>
+    /// <param name="surface">The surface to fill.</param>
+    /// <param name="c">The character to fill with.</param>
+    /// <param name="foreground">The foreground color applied to every cell.</param>
+    /// <param name="background">The background color applied to every cell.</param>
+    /// <param name="alpha">The opacity (0-255) of the background color.</param>
+    /// <param name="styleAttributes">Text style attributes applied to every cell.</param>
     public static void Fill(this ISurface surface, char c, Color foreground, Color background, byte alpha = Style.MaxAlpha, StyleAttributes styleAttributes = StyleAttributes.None)
     {
         Fill(surface, c, new Style(foreground, background, alpha, styleAttributes));
     }
 
+    /// <summary>Fills the entire surface with the specified character and foreground color, using a transparent background.</summary>
+    /// <param name="surface">The surface to fill.</param>
+    /// <param name="c">The character to fill with.</param>
+    /// <param name="foreground">The foreground color applied to every cell.</param>
+    /// <param name="styleAttributes">Text style attributes applied to every cell.</param>
     public static void Fill(this ISurface surface, char c, Color foreground, StyleAttributes styleAttributes = StyleAttributes.None)
     {
         surface.Fill(c, foreground, Color.Black, Style.MinAlpha, styleAttributes: styleAttributes);
     }
 
+    /// <summary>Fills the entire surface with a background color.</summary>
+    /// <param name="surface">The surface to fill.</param>
+    /// <param name="background">The background color applied to every cell.</param>
+    /// <param name="alpha">The opacity (0-255) of the background color. Partial alpha blends over existing content.</param>
     public static void Fill(this ISurface surface, Color background, byte alpha = Style.MaxAlpha)
     {
         surface.Fill(Surface.BackgroundCharacter, background, background, alpha);
@@ -122,16 +143,38 @@ public static class SurfaceExtensions
         }
     }
 
+    /// <summary>Writes a single character at the specified position with the given colors and style attributes.</summary>
+    /// <param name="target">The surface to write to.</param>
+    /// <param name="c">The character to write.</param>
+    /// <param name="x">The X coordinate of the cell.</param>
+    /// <param name="y">The Y coordinate of the cell.</param>
+    /// <param name="foreground">The foreground color.</param>
+    /// <param name="background">The background color.</param>
+    /// <param name="alpha">The opacity (0-255) of the background color.</param>
+    /// <param name="styleAttributes">Text style attributes to apply.</param>
     public static void Write(this ISurface target, char c, int x, int y, Color foreground, Color background, byte alpha = Style.MaxAlpha, StyleAttributes styleAttributes = StyleAttributes.None)
     {
         target.Write(c, x, y, new Style(foreground, background, alpha, styleAttributes));
     }
 
+    /// <summary>Writes a single character at the specified position with the given foreground color, using a transparent background.</summary>
+    /// <param name="target">The surface to write to.</param>
+    /// <param name="c">The character to write.</param>
+    /// <param name="x">The X coordinate of the cell.</param>
+    /// <param name="y">The Y coordinate of the cell.</param>
+    /// <param name="foreground">The foreground color.</param>
+    /// <param name="styleAttributes">Text style attributes to apply.</param>
     public static void Write(this ISurface target, char c, int x, int y, Color foreground, StyleAttributes styleAttributes = StyleAttributes.None)
     {
         target.Write(c, x, y, foreground, Color.Black, Style.MinAlpha, styleAttributes: styleAttributes);
     }
 
+    /// <summary>Writes a background color at the specified position.</summary>
+    /// <param name="target">The surface to write to.</param>
+    /// <param name="x">The X coordinate of the cell.</param>
+    /// <param name="y">The Y coordinate of the cell.</param>
+    /// <param name="background">The background color.</param>
+    /// <param name="alpha">The opacity (0-255) of the background color. Partial alpha blends over existing content.</param>
     public static void Write(this ISurface target, int x, int y, Color background, byte alpha = Style.MaxAlpha)
     {
         target.Write(Surface.BackgroundCharacter, x, y, background, background, alpha);

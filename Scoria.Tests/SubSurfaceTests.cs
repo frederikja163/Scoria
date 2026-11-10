@@ -44,14 +44,14 @@ public class SubSurfaceTests
     public void GetStyle_ReadsFromParentWithOffset()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Style style = new Style(10, 20, 30, StyleAttributes.None);
+        Style style = new Style(new Color(10, 20, 30), StyleAttributes.None);
         parent.Write('X', 3, 4, style);
         SubSurface sub = new SubSurface(parent, 1, 2, 5, 5, parent.Theme);
 
         Style result = sub.GetStyle(2, 2);
-        Assert.That(result.ForegroundRed, Is.EqualTo(10));
-        Assert.That(result.ForegroundGreen, Is.EqualTo(20));
-        Assert.That(result.ForegroundBlue, Is.EqualTo(30));
+        Assert.That(result.Foreground.R, Is.EqualTo(10));
+        Assert.That(result.Foreground.G, Is.EqualTo(20));
+        Assert.That(result.Foreground.B, Is.EqualTo(30));
     }
 
     [Test]
@@ -78,91 +78,87 @@ public class SubSurfaceTests
     }
 
     [Test]
-    public void Write_NegativeX_ClampsToLeftEdge()
+    public void Write_NegativeX_DoesNothing()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
         sub.Write('A', -1, 0, new Style());
 
-        Assert.That(parent.GetChar(0, 0), Is.EqualTo('A'));
+        Assert.That(parent.GetChar(0, 0), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void Write_NegativeY_ClampsToTopEdge()
+    public void Write_NegativeY_DoesNothing()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
         sub.Write('A', 0, -1, new Style());
 
-        Assert.That(parent.GetChar(0, 0), Is.EqualTo('A'));
+        Assert.That(parent.GetChar(0, 0), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void Write_XEqualToWidth_ClampsToRightEdge()
+    public void Write_XEqualToWidth_DoesNothing()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
         sub.Write('A', 5, 0, new Style());
 
-        Assert.That(parent.GetChar(4, 0), Is.EqualTo('A'));
+        Assert.That(parent.GetChar(4, 0), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void Write_YEqualToHeight_ClampsToBottomEdge()
+    public void Write_YEqualToHeight_DoesNothing()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
         sub.Write('A', 0, 5, new Style());
 
-        Assert.That(parent.GetChar(0, 4), Is.EqualTo('A'));
+        Assert.That(parent.GetChar(0, 4), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void GetChar_NegativeX_ClampsToLeftEdge()
+    public void GetChar_NegativeX_ReturnsNullChar()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         parent.Write('X', 0, 0, new Style());
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
 
-        Assert.That(sub.GetChar(-1, 0), Is.EqualTo('X'));
+        Assert.That(sub.GetChar(-1, 0), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void GetChar_YEqualToHeight_ClampsToBottomEdge()
+    public void GetChar_YEqualToHeight_ReturnsNullChar()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
         parent.Write('Y', 0, 4, new Style());
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
 
-        Assert.That(sub.GetChar(0, 5), Is.EqualTo('Y'));
+        Assert.That(sub.GetChar(0, 5), Is.EqualTo('\0'));
     }
 
     [Test]
-    public void GetStyle_NegativeX_ClampsToLeftEdge()
+    public void GetStyle_NegativeX_ReturnsDefaultStyle()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Style style = new Style(10, 20, 30, StyleAttributes.None);
+        Style style = new Style(new Color(10, 20, 30), StyleAttributes.None);
         parent.Write('X', 0, 0, style);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
 
         Style result = sub.GetStyle(-1, 0);
-        Assert.That(result.ForegroundRed, Is.EqualTo(10));
-        Assert.That(result.ForegroundGreen, Is.EqualTo(20));
-        Assert.That(result.ForegroundBlue, Is.EqualTo(30));
+        Assert.That(result, Is.EqualTo(default(Style)));
     }
 
     [Test]
-    public void GetStyle_XEqualToWidth_ClampsToRightEdge()
+    public void GetStyle_XEqualToWidth_ReturnsDefaultStyle()
     {
         Surface parent = new Surface(10, 10, Theme.Default);
-        Style style = new Style(10, 20, 30, StyleAttributes.None);
+        Style style = new Style(new Color(10, 20, 30), StyleAttributes.None);
         parent.Write('X', 4, 0, style);
         SubSurface sub = new SubSurface(parent, 0, 0, 5, 5, parent.Theme);
 
         Style result = sub.GetStyle(5, 0);
-        Assert.That(result.ForegroundRed, Is.EqualTo(10));
-        Assert.That(result.ForegroundGreen, Is.EqualTo(20));
-        Assert.That(result.ForegroundBlue, Is.EqualTo(30));
+        Assert.That(result, Is.EqualTo(default(Style)));
     }
 
     [Test]

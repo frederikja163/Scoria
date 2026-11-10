@@ -34,11 +34,16 @@ public enum StyleAttributes : byte
 [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
 public struct Style() : IEquatable<Style>
 {
+    /// <summary>The maximum alpha value, representing a fully opaque background.</summary>
     public const byte MaxAlpha = byte.MaxValue;
+    /// <summary>Half of the maximum alpha value, used as a rounding term during alpha blending.</summary>
     public const byte HalfAlpha = MaxAlpha / 2;
+    /// <summary>The minimum alpha value, representing a fully transparent background.</summary>
     public const byte MinAlpha = 0;
 
+    /// <summary>Gets or sets the foreground color.</summary>
     public Color Foreground { get; set; }
+    /// <summary>Gets or sets the background color.</summary>
     public Color Background { get; set; }
 
     /// <summary>Alpha (opacity) of the background color (0-255). Defaults to 255 (fully opaque).</summary>

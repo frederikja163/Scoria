@@ -8,6 +8,7 @@ namespace Scoria.Rendering;
 /// </summary>
 public sealed class Surface : ISurface
 {
+    /// <summary>The character that represents a background cell, rendered as a space by console drivers.</summary>
     public const char BackgroundCharacter = '\0';
     private readonly char[,] _glyphs;
     private readonly Style[,] _styles;
@@ -36,10 +37,8 @@ public sealed class Surface : ISurface
     /// <inheritdoc />
     public void Write(char c, int x, int y, Style style)
     {
-        if (Width <= 0 || Height <= 0)
+        if (!this.Contains(x, y))
             return;
-        x = Math.Clamp(x, 0, Width - 1);
-        y = Math.Clamp(y, 0, Height - 1);
 
         if (style.Alpha != Style.MaxAlpha)
         {
